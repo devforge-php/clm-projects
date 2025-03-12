@@ -167,10 +167,11 @@ return [
     |
     */
 
-    'cache' => [
-        'rows' => 1000,
-        'bytes' => 10000,
-    ],
+'cache' => [
+    'rows' => 10000, // Avval 1000 edi, ko‘paytirib qo‘ydik
+    'bytes' => 20000, // Ma’lumot hajmini ham oshirdik
+],
+
 
     /*
     |--------------------------------------------------------------------------
