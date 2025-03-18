@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Events\ProfileEvent;
+use App\Events\ReferralEvent;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,14 +25,17 @@ class ProcessUserRegistration implements ShouldQueue
 
     public function handle(): void
     {
-        User::create([
-            'firstname' => $this->data['firstname'],
-            'lastname' => $this->data['lastname'],
-            'username' => $this->data['username'],
-            'city' => $this->data['city'],
-            'phone' => $this->data['phone'],
-            'email' => $this->data['email'],
-            'password' => Hash::make($this->data['password'], ['rounds' => 8]),
-        ]);
+    $user = User::create([
+        'firstname' => $this->data['firstname'],
+        'lastname' => $this->data['lastname'],
+        'username' => $this->data['username'],
+        'city' => $this->data['city'],
+        'phone' => $this->data['phone'],
+        'email' => $this->data['email'],
+        'password' => Hash::make($this->data['password'], ['rounds' => 8]),
+    ]);
+
+    ProfileEvent::dispatch($user);
+    ReferralEvent::dispatch($user);
     }
 }
