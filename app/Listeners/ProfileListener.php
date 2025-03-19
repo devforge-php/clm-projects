@@ -27,7 +27,7 @@ class ProfileListener
             'gold' => 0,
             'silver' => 0,
             'diamond' => 0,
-            'level' => 1,
+            'level' => 0,
         ]);
         
     }

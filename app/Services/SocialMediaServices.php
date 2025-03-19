@@ -10,14 +10,15 @@ class SocialMediaServices
 {
     public function getAllSocialUsers()
     {
-        return Cache::remember('social_user_names', 3600, function () {
-            return SocialMediaResource::collection(
-                SocialUserName::with(['user:id,firstname,lastname'])
-                    ->select(['id', 'user_id', 'telegram_user_name', 'instagram_user_name', 'facebook_user_name', 'youtube_user_name', 'twitter_user_name'])
-                    ->get()
-            );
-        });
+        return SocialMediaResource::collection(
+            SocialUserName::with(['user:id,firstname,lastname'])
+                ->where('user_id', auth()->id()) // Faqat hozirgi foydalanuvchini olish
+                ->select(['id', 'user_id', 'telegram_user_name', 'instagram_user_name', 'facebook_user_name', 'youtube_user_name', 'twitter_user_name'])
+                ->get()
+        );
     }
+    
+    
 
     public function createSocialUser(array $data, $userId)
     {

@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Events\ProfileEvent;
+use App\Events\ProfileUpdated;
 use App\Events\ReferralEvent;
 use App\Listeners\ProfileListener;
 use App\Listeners\ReferralListener;
+use App\Listeners\UpdateProfileLevel;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -24,6 +26,9 @@ class EventServiceProvider extends ServiceProvider
        ],
        ReferralEvent::class => [
         ReferralListener::class,
+    ],
+    ProfileUpdated::class => [
+        UpdateProfileLevel::class,
     ],
     ];
 
