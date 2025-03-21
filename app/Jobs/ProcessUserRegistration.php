@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\AdminEvent;
 use App\Events\ProfileEvent;
 use App\Events\ReferralEvent;
 use App\Models\User;
@@ -37,5 +38,6 @@ class ProcessUserRegistration implements ShouldQueue
 
     ProfileEvent::dispatch($user);
     ReferralEvent::dispatch($user);
+    AdminEvent::dispatch($user);
     }
 }

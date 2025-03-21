@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Events\AdminEvent;
 use App\Events\ProfileEvent;
 use App\Events\ProfileUpdated;
 use App\Events\ReferralEvent;
 use App\Listeners\ProfileListener;
 use App\Listeners\ReferralListener;
 use App\Listeners\UpdateProfileLevel;
+use App\Listeners\UsersRegister;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -29,6 +31,9 @@ class EventServiceProvider extends ServiceProvider
     ],
     ProfileUpdated::class => [
         UpdateProfileLevel::class,
+    ],
+    AdminEvent::class => [
+        UsersRegister::class,
     ],
     ];
 

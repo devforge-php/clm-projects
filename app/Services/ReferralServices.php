@@ -44,12 +44,12 @@ class ReferralServices
         // Referrerga 2 gold qo'shish
         $profile = Profile::where('user_id', $referrer->id)->first();
         if ($profile) {
-            $profile->gold += 2;
+            $profile->gold += 1;
             $profile->save();
         } else {
             Profile::create([
                 'user_id' => $referrer->id,
-                'gold' => 2,
+                'gold' => 1,
                 'silver' => 0,
                 'diamond' => 0,
                 'level' => 0

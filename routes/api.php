@@ -1,11 +1,13 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Click\PaymentController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Referral\ReferralController;
 use App\Http\Controllers\SocailMedia\SocialMediaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -40,3 +42,10 @@ Route::middleware(['auth:sanctum'])->group( function () {
     Route::post('referral-code', [ReferralController::class, 'useReferralCode']);
 }); 
 // Referral End
+
+// Click start
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
+    Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
+});
+// Click end
