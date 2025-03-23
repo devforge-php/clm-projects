@@ -32,9 +32,7 @@ class EventServiceProvider extends ServiceProvider
     ProfileUpdated::class => [
         UpdateProfileLevel::class,
     ],
-    AdminEvent::class => [
-        UsersRegister::class,
-    ],
+  
     ];
 
     /**

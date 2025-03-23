@@ -17,19 +17,22 @@ class PaymentController extends Controller
 
     public function initiatePayment(Request $request)
     {
-        $request->validate([
-            'type' => 'required|in:gold,silver,diamond',
-            'quantity' => 'required|integer|min:1|max:10',
-        ]);
+        $quantity = $request->input('quantity', 5); // Default 5 tanga
 
-        $paymentUrl = $this->clickService->generatePaymentUrl($request->type, $request->quantity);
+        $paymentUrl = $this->clickService->generatePaymentUrl($quantity);
+
+        if (!$paymentUrl) {
+            return response()->json(['message' => 'Sotib olish limiti oshib ketdi yoki noto‘g‘ri miqdor kiritildi!'], 403);
+        }
 
         return response()->json(['payment_url' => $paymentUrl]);
     }
 
     public function paymentCallback(Request $request)
     {
-        if ($this->clickService->processPayment($request->status, $request->amount)) {
+        $result = $this->clickService->processPayment($request);
+
+        if ($result) {
             return response()->json(['message' => 'To‘lov muvaffaqiyatli amalga oshdi']);
         }
 

@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('image')->nullable();
-            $table->string('gold')->nullable();     
-            $table->string('silver')->nullable();     
-            $table->string('diamond')->nullable();
+            $table->string('gold')->nullable();        
+            $table->string('tasks')->default('0');     
+            $table->string('refferals')->default('0');      
             $table->string('level')->default('0');     
             $table->timestamps();
         });

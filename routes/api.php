@@ -44,8 +44,12 @@ Route::middleware(['auth:sanctum'])->group( function () {
 // Referral End
 
 // Click start
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
-    Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
-});
+// Click start
+
+// To'lovni boshlash (faqat autentifikatsiya qilingan foydalanuvchilar)
+Route::middleware(['auth:sanctum'])->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
+
+// Callback ochiq bo'lishi kerak, chunki Click serveri login qilmagan holda so'rov yuboradi
+Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
+
 // Click end

@@ -25,8 +25,8 @@ class ProfileListener
     {
         $event->user->profile()->create([
             'gold' => 0,
-            'silver' => 0,
-            'diamond' => 0,
+            'tasks' => 0,
+            'refferals' => 0,
             'level' => 0,
         ]);
         

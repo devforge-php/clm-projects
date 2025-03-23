@@ -28,14 +28,9 @@ class UpdateProfileLevel
     
         // Yangi levelni hisoblash
         if ($profile->gold >= 5) {
-            $level += 10;
-        }
-        if ($profile->silver >= 5) {
-            $level += 7;
-        }
-        if ($profile->diamond >= 5) {
             $level += 5;
         }
+    
     
         // Agar level o'zgargan bo'lsa, update qilamiz
         if ($profile->level !== $level) {

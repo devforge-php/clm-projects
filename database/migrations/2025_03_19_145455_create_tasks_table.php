@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('youtube')->nullable();
             $table->string('twitter')->nullable();
             $table->string('text');
-            $table->enum('reward', ['gold', 'silver', 'diamond']); // Tanga turi
+            $table->enum('reward', ['gold']); // Tanga turi
             $table->timestamps();
         });
     }

@@ -35,9 +35,9 @@ class ProcessUserRegistration implements ShouldQueue
         'email' => $this->data['email'],
         'password' => Hash::make($this->data['password'], ['rounds' => 8]),
     ]);
-
+   
     ProfileEvent::dispatch($user);
     ReferralEvent::dispatch($user);
-    AdminEvent::dispatch($user);
+    
     }
 }
