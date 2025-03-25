@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use \Log;
+use App\Http\Requests\TaskRequest;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -29,7 +31,7 @@ class TaskService
     /**
      * Create a new task
      */
-    public function createTask(Request $request)
+    public function createTask(TaskRequest $request)
     {
         $imagePath = null;
 
@@ -48,6 +50,7 @@ class TaskService
             'youtube' => $request->youtube,
             'twitter' => $request->twitter,
             'text' => $request->text,
+            'number' => $request->number, // <-- SHU JOYNI TEKSHIRING
             'reward' => $request->reward,
         ]);
 
@@ -59,7 +62,7 @@ class TaskService
     /**
      * Update an existing task
      */
-    public function updateTask(Request $request, string $id)
+    public function updateTask(TaskRequest $request, string $id)
     {
         $task = Task::findOrFail($id);
         $task->update($request->all());

@@ -21,8 +21,10 @@ class SocilaMediaResource extends JsonResource
             ],
             'profile' => [
                 'image' => $this->user->profile->image ?? null, // **User modelining profile bog‘lamasi orqali**
-                'gold' => (int) ($this->user->profile->gold ?? 0),
-                'level' => (int) ($this->user->profile->level ?? 0),
+                'gold' => (int) ($this->profile?->gold ?? 0),
+                'tasks' => (int) ($this->profile?->tasks ?? 0),
+                'refferals' => (int) ($this->profile?->refferals ?? 0),
+                'level' => (int) ($this->profile?->level ?? 0),
             ],
             'socilamedia' => [
                 'telegram_user_name' => $this->telegram_user_name,

@@ -41,17 +41,18 @@ class ReferralServices
             return ['error' => 'Referal kod egasi topilmadi!', 'status' => 404];
         }
 
-        // Referrerga 2 gold qo'shish
+        // Referrerga 2 gold qo'shish va refferals ni oshirish
         $profile = Profile::where('user_id', $referrer->id)->first();
         if ($profile) {
             $profile->gold += 1;
+            $profile->refferals += 1;
             $profile->save();
         } else {
             Profile::create([
                 'user_id' => $referrer->id,
                 'gold' => 1,
-                'silver' => 0,
-                'diamond' => 0,
+                'tasks' => 0,
+                'refferals' => 1,
                 'level' => 0
             ]);
         }

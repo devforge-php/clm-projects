@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Events\AdminEvent;
 use App\Events\ProfileEvent;
 use App\Events\ReferralEvent;
+use App\Events\TelegramAdmin;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,7 +36,7 @@ class ProcessUserRegistration implements ShouldQueue
         'email' => $this->data['email'],
         'password' => Hash::make($this->data['password'], ['rounds' => 8]),
     ]);
-   
+   TelegramAdmin::dispatch($user);
     ProfileEvent::dispatch($user);
     ReferralEvent::dispatch($user);
     

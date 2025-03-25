@@ -9,12 +9,18 @@ class ProfileServices
 {
     public function getProfileByUserId($userId)
     {
-        return Cache::remember("profile_{$userId}", 3600, function () use ($userId) {
-            return Profile::with('user') // Profile bilan Userni olish
-                ->where('user_id', $userId)
-                ->first();
+        $profile = Profile::where('user_id', $userId)->first();
+    
+        if (!$profile) {
+            return null;
+        }
+    
+        $cacheKey = "profile_{$userId}_{$profile->updated_at->timestamp}"; // updated_at bo‘yicha cache key
+        return Cache::remember($cacheKey, 3600, function () use ($profile) {
+            return $profile->load('user');
         });
     }
+    
     
 
     public function updateProfile($userId, $data)
@@ -24,15 +30,17 @@ class ProfileServices
         if ($profile) {
             $profile->image = $data['image'] ?? $profile->image;
             $profile->save();
+            
+            // Cache’ni yangilash uchun eski key'ni o‘chiramiz
+            Cache::forget("profile_{$userId}_{$profile->updated_at->timestamp}");
     
-            // Eski cache’ni o‘chiramiz
-            Cache::forget("profile_{$userId}");
-    
-            // Yangi cache’ni yaratamiz
-            Cache::put("profile_{$userId}", $profile->load('user'), 3600);
+            // Yangi cache qo‘shamiz
+            $newCacheKey = "profile_{$userId}_{$profile->updated_at->timestamp}";
+            Cache::put($newCacheKey, $profile->load('user'), 3600);
         }
         
         return $profile;
     }
+    
  
 }

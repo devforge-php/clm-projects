@@ -26,6 +26,8 @@ class UserProfileResource extends JsonResource
             'profile' => [
                 'image' => $this->profile?->image, 
                 'gold' => (int) ($this->profile?->gold ?? 0),
+                'tasks' => (int) ($this->profile?->tasks ?? 0),
+                'refferals' => (int) ($this->profile?->refferals ?? 0),
                 'level' => (int) ($this->profile?->level ?? 0),
                 'created_at' => optional($this->profile?->created_at)->toISOString(),
                 'updated_at' => optional($this->profile?->updated_at)->toISOString(),

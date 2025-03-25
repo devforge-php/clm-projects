@@ -49,7 +49,7 @@ class TaskController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(TaskRequest $request, string $id)
     {
         $task = $this->taskService->updateTask($request, $id);
         return response()->json(['message' => 'Task updated successfully', 'task' => $task]);

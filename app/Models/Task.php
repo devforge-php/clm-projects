@@ -9,6 +9,7 @@ class Task extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = ['image', 'telegram', 'instagram', 'youtube', 'twitter', 'text', 'number','reward', ];
+
     
 }

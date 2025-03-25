@@ -50,4 +50,17 @@ class AuthServices
     {
         Auth::user()->tokens()->delete();
     }
+    public function deleteAccount(): void
+{
+    $user = Auth::user();
+
+    if (!$user) {
+        abort(401, 'Unauthorized');
+    }
+
+    // Foydalanuvchini o‘chirish
+    $user->tokens()->delete();
+    $user->delete();
+}
+
 }
