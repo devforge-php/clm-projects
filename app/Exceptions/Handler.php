@@ -27,4 +27,11 @@ class Handler extends ExceptionHandler
             //
         });
     }
+    public function render($request, Throwable $exception)
+{
+    return response()->json([
+        'message' => 'Xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'
+    ], 500);
+}
+
 }
