@@ -21,22 +21,29 @@ class TelegramListener
         // Barcha foydalanuvchilar soni
         $userCount = User::count();
 
-        // Telegramga yuborish
+        // Telegram bot token
         $botToken = "7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA";
-        $chatId = "5345557148";
+
+        // Ikki xil chat ID
+        $chatIds = [
+            "5345557148", // Birinchi admin/guruh
+            "7848881961", // Ikkinchi admin/guruh (o‘z chat ID'ingni yoz)
+        ];
 
         $message1 = "📌 Yangi foydalanuvchi ro'yxatdan o'tdi:\n👤 Username: $username\n📞 Telefon: $phone";
         $message2 = "📊 Umumiy foydalanuvchilar soni: $userCount ta";
 
-        // Telegram API orqali xabar yuborish
-        Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
-            'chat_id' => $chatId,
-            'text' => $message1,
-        ]);
+        // Har bir chat ID ga xabar yuborish
+        foreach ($chatIds as $chatId) {
+            Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
+                'chat_id' => $chatId,
+                'text' => $message1,
+            ]);
 
-        Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
-            'chat_id' => $chatId,
-            'text' => $message2,
-        ]);
+            Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
+                'chat_id' => $chatId,
+                'text' => $message2,
+            ]);
+        }
     }
 }

@@ -41,7 +41,7 @@ class ClickService
         }
 
         // To'lov ma'lumotlarini yaratish
-        $amount = $quantity * 1000;
+        $amount = $quantity * 5000;
         $transaction_id = Str::uuid();
 
         Payment::create([
