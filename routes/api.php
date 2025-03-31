@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum'])->group( function () {
     Route::get('profile', [ProfileController::class, 'show']);
     Route::post('profileImage', [ProfileController::class, 'update']);
+    Route::post('profile', [ProfileController::class, 'updateprofile']);
 
     Route::get('socialMedia', [SocialMediaController::class, 'index']);
     Route::post('socialMedia', [SocialMediaController::class, 'store']);

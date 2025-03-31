@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ProfileResource;
 use App\Services\ProfileServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
@@ -18,34 +19,41 @@ class ProfileController extends Controller
 
     public function show()
     {
-        $userId = auth()->id(); // User ID ni auth orqali olamiz
+        $userId = auth()->id();
         $profile = $this->profileService->getProfileByUserId($userId);
+
+        if (!$profile) {
+            return response()->json(['error' => 'Profile topilmadi'], 404);
+        }
+
         return response()->json(new ProfileResource($profile));
     }
     
     public function update(Request $request)
     {
         $userId = auth()->id();
-        
-        // Faqat image maydonini qabul qilish
-        $data = $request->only(['image']); // faqat image maydonini olamiz
-        
-        // Agar file bo'lsa, tasvirni yuklab olamiz va saqlaymiz
-        if ($request->hasFile('image')) {
-            // Faylni storage/public/profiles papkasiga saqlaymiz
-            $imagePath = $request->file('image')->store('profiles', 'public');
-            
-            // Tasvirni saqlash
-            $data['image'] = $imagePath;
+        $data = $request->only(['image']);
+
+        $profile = $this->profileService->updateProfileImage($userId, $data);
+
+        if (!$profile) {
+            return response()->json(['error' => 'Profil rasmni yangilashda xatolik yuz berdi'], 400);
         }
-        
-        // Tasvirni yangilash
-        $profile = $this->profileService->updateProfile($userId, $data);
-        
-        return response()->json($profile);
+
+        return response()->json(['data' => new ProfileResource($profile)]);
     }
-    
-    
 
+    public function updateprofile(Request $request)
+    {
+        $userId = auth()->id();
+        $data = $request->only(['firstname', 'lastname', 'username', 'city', 'phone', 'email']);
 
+        $user = $this->profileService->updateUserProfile($userId, $data);
+
+        if (!$user) {
+            return response()->json(['error' => 'Foydalanuvchi topilmadi yoki yangilashda xatolik yuz berdi'], 400);
+        }
+
+        return response()->json(['data' => new ProfileResource($user->profile)]);
+    }
 }

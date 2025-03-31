@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('type'); // gold, silver, diamond
             $table->integer('quantity'); // Nechta tanga
             $table->decimal('amount', 10, 2); // To‘lov summasi
-            $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'failed', 'cancelled', 'error'])->default('pending'); // **STATUSLAR to‘ldirildi**
             $table->timestamps();
         });
     }

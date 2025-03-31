@@ -6,6 +6,8 @@ use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -24,13 +26,17 @@ class ClickService
 
     public function generatePaymentUrl($quantity)
     {
-        // Faqat 5 ta tanga olish mumkin
         if ($quantity != 5) {
             return false;
         }
 
-        // Foydalanuvchi haftasiga 4 martadan ortiq sotib ololmaydi
         $user = auth()->user();
+        $cacheKey = "user_{$user->id}_last_purchase";
+
+        if (Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
         $oneWeekAgo = Carbon::now()->subDays(7);
         $purchaseCount = Payment::where('user_id', $user->id)
             ->where('created_at', '>=', $oneWeekAgo)
@@ -40,22 +46,33 @@ class ClickService
             return false;
         }
 
-        // To'lov ma'lumotlarini yaratish
-        $amount = $quantity * 5000;
-        $transaction_id = Str::uuid();
+        DB::beginTransaction();
+        try {
+            $amount = $quantity * 5000;
+            $transaction_id = Str::uuid();
 
-        Payment::create([
-            'user_id' => $user->id,
-            'type' => 'gold',
-            'quantity' => $quantity,
-            'amount' => $amount,
-            'transaction_id' => $transaction_id,
-            'status' => 'pending'
-        ]);
+            $payment = Payment::create([
+                'user_id' => $user->id,
+                'type' => 'gold',
+                'quantity' => $quantity,
+                'amount' => $amount,
+                'transaction_id' => $transaction_id,
+                'status' => 'pending'
+            ]);
 
-        $returnUrl = route('payment.callback', [], true);
+            $returnUrl = route('payment.callback', [], true);
+            $paymentUrl = "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
 
-        return "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
+            Cache::put($cacheKey, $paymentUrl, 86400);
+            
+            DB::commit();
+            return $paymentUrl;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Payment yaratishda xatolik: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function processPayment($request)
@@ -69,25 +86,44 @@ class ClickService
                           ->where('amount', $request->amount)
                           ->first();
 
-        if (!$payment || $request->status !== "success") {
+        if (!$payment) {
+            Log::error("Payment not found: " . $request->transaction_param);
             return false;
         }
 
-        // **Bu yerda foydalanuvchini olish kerak, chunki auth ishlamaydi**
+        return $this->handlePaymentStatus($payment, $request->status);
+    }
+
+    private function handlePaymentStatus($payment, $status)
+    {
+        DB::beginTransaction();
+        try {
+            if ($status === "success") {
+                if ($payment->status !== 'paid') {
+                    $payment->update(['status' => 'paid']);
+                    $this->addGoldToUser($payment);
+                }
+            } else {
+                $payment->update(['status' => $status]);
+            }
+
+            DB::commit();
+            return $status === "success";
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function addGoldToUser($payment)
+    {
         $user = User::find($payment->user_id);
-        if (!$user) {
-            Log::error("User not found for payment ID: " . $payment->id);
-            return false;
+        if ($user) {
+            $profile = Profile::firstOrCreate(['user_id' => $user->id]);
+            $profile->gold += $payment->quantity;
+            $profile->save();
         }
-
-        $payment->update(['status' => 'completed']);
-
-        // Foydalanuvchining profiliga tangalar qo'shamiz
-        $profile = Profile::firstOrCreate(['user_id' => $user->id]);
-        $profile->gold += $payment->quantity;
-        $profile->save();
-
-        return true;
     }
 
     private function verifySignature($request)
