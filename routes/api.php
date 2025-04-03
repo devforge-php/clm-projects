@@ -6,28 +6,21 @@ use App\Http\Controllers\Click\PaymentController;
 use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Referral\ReferralController;
 use App\Http\Controllers\SocailMedia\SocialMediaController;
-use App\Http\Controllers\TaskController as ControllersTaskController;
 use App\Http\Controllers\UserTasks\UserTaskController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
-
-
-
 // Auth start
+Route::post('register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
-Route::post('register', [AuthController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
-    Route::delete('delete-account', [AuthController::class, 'deleteAccount']); // Yangi yo‘l qo‘shildi
+    Route::delete('delete-account', [AuthController::class, 'deleteAccount']);
 });
-
-    // Auth end
+// Auth end
 
 // Profile start
-Route::middleware(['auth:sanctum'])->group( function () {
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
     Route::post('profileImage', [ProfileController::class, 'update']);
     Route::post('profile', [ProfileController::class, 'updateprofile']);
@@ -35,35 +28,24 @@ Route::middleware(['auth:sanctum'])->group( function () {
     Route::get('socialMedia', [SocialMediaController::class, 'index']);
     Route::post('socialMedia', [SocialMediaController::class, 'store']);
     Route::put('socialMedia/{id}', [SocialMediaController::class, 'update']);
-   
 }); 
 // Profile end
 
-
-
-
 // Referral Start
-Route::middleware(['auth:sanctum'])->group( function () {
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('referral', [ReferralController::class, 'index']);
     Route::post('referral-code', [ReferralController::class, 'useReferralCode']);
-}); 
+});
 // Referral End
 
-// Click start
-// Click start
-
-// To'lovni boshlash (faqat autentifikatsiya qilingan foydalanuvchilar)
-Route::middleware(['auth:sanctum'])->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
-
-// Callback ochiq bo'lishi kerak, chunki Click serveri login qilmagan holda so'rov yuboradi
-Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
-
+// Click start (to‘lovlar)
+Route::middleware(['auth:sanctum', 'throttle:5,1'])->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
+Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback'); // ochiq qolishi kerak
 // Click end
 
-
-// takst start
-Route::middleware('auth:sanctum')->group(function () {
+// Tasks start
+Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
     Route::get('/tasks', [UserTaskController::class, 'index']);
     Route::post('/tasks/verify', [UserTaskController::class, 'verifyTask']);
 });
-// takst end
+// Tasks end

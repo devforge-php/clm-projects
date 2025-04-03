@@ -2,17 +2,15 @@
 
 use App\Http\Controllers\Admin\SocialMediaUserNames\SocialUserNamesController;
 use App\Http\Controllers\Admin\Tasks\TaskController;
-use App\Http\Controllers\Admin\UserReset\userResetController;
+use App\Http\Controllers\Admin\UserReset\UserResetController;
 use App\Http\Controllers\Admin\Users\UserController;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::resource('tasks', TaskController::class)->middleware('throttle:60,1');
+    Route::resource('users', UserController::class)->middleware('throttle:60,1');
 
+    Route::get('SocialMedia', [SocialUserNamesController::class, 'index'])->middleware('throttle:30,1');
 
-
-
-Route::middleware(['auth:sanctum', 'role:admin'])->group( function () {
-    Route::resource('tasks', TaskController::class);
-    Route::resource('users', UserController::class);
-    Route::get('SocialMedia', [SocialUserNamesController::class, 'index']);
-    Route::post('reset-users', [userResetController::class, 'resetAllUsers']);
-    });
+    Route::post('reset-users', [UserResetController::class, 'resetAllUsers'])->middleware('throttle:5,1');
+});
