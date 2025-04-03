@@ -15,12 +15,7 @@ class UserService
         $cacheKey = "users_page_{$page}";
 
         return Cache::remember($cacheKey, 60, function () use ($page) {
-            return User::with('profile')
-                ->orderByDesc('profile.gold')  // 1. Gold bo'yicha saralash
-                ->orderByDesc('profile.tasks')  // 2. Tasks bo'yicha
-                ->orderByDesc('profile.refferals')  // 3. Refferals bo'yicha
-                ->orderByDesc('profile.level')  // 4. Level bo'yicha
-                ->paginate(10);
+            return User::paginate(10);
         });
     }
 
@@ -30,7 +25,7 @@ class UserService
     public function getUserById(string $id)
     {
         return Cache::remember("user_{$id}", 60, function () use ($id) {
-            return User::with('profile')->findOrFail($id);
+            return User::findOrFail($id);
         });
     }
 

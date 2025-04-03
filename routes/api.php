@@ -22,7 +22,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Profile start
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
-    Route::post('profileImage', [ProfileController::class, 'update']);
+    Route::put('profileImage', [ProfileController::class, 'update']);
     Route::post('profile', [ProfileController::class, 'updateprofile']);
 
     Route::get('socialMedia', [SocialMediaController::class, 'index']);
