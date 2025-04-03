@@ -60,6 +60,6 @@ class ReferralServices
         // Foydalanuvchi ushbu koddan foydalanganini belgilaymiz (cache bilan)
         Cache::put("user_{$user->id}_used_referral", true, now()->addDays(30));
 
-        return ['message' => 'Referal kod muvaffaqiyatli ishlatildi, foydalanuvchiga 2 gold qo\'shildi!', 'status' => 200];
+        return ['message' => 'Referal kod muvaffaqiyatli ishlatildi, foydalanuvchiga 1 gold qo\'shildi!', 'status' => 200];
     }
 }
