@@ -18,35 +18,7 @@ class ProfileServices
         });
     }
 
-    public function updateProfileImage($userId, $data)
-    {
-        $cacheKey = "profile_image_update_{$userId}";
-
-        // 1 kunda 1 marta rasm yangilashni tekshirish
-        if (Cache::has($cacheKey)) {
-            return response()->json(['error' => 'Siz 1 kunda faqat 1 marta rasmni yangilashingiz mumkin'], 429);
-        }
-
-        $profile = Profile::where('user_id', $userId)->first();
-
-        if ($profile && isset($data['image'])) {
-            $imagePath = $data['image']->store('profiles', 'public');
-
-            // Eski rasmni o‘chirish
-            if ($profile->image) {
-                Storage::disk('public')->delete($profile->image);
-            }
-
-            $profile->image = $imagePath;
-            $profile->save();
-
-            // Cache'ni yangilash
-            Cache::forget("profile_{$userId}");
-            Cache::put($cacheKey, true, now()->addDay()); // 1 kunga cache qo‘shish
-        }
-
-        return $profile;
-    }
+ 
 
     public function updateUserProfile($userId, $data)
     {

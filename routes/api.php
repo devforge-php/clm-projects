@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\Tasks\TaskController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Click\PaymentController;
 use App\Http\Controllers\Profile\ProfileController;
+use App\Http\Controllers\Profile\ProfileImageController;
 use App\Http\Controllers\Referral\ReferralController;
 use App\Http\Controllers\SocailMedia\SocialMediaController;
 use App\Http\Controllers\UserTasks\UserTaskController;
@@ -22,13 +23,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Profile start
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
-    Route::put('profileImage', [ProfileController::class, 'update']);
+
     Route::post('profile', [ProfileController::class, 'updateprofile']);
 
     Route::get('socialMedia', [SocialMediaController::class, 'index']);
     Route::post('socialMedia', [SocialMediaController::class, 'store']);
     Route::put('socialMedia/{id}', [SocialMediaController::class, 'update']);
 }); 
+Route::middleware('auth:sanctum')->get('/profileImage', [ProfileImageController::class, 'index']);
+Route::middleware('auth:sanctum')->post('/profileImage', [ProfileImageController::class, 'store']);
+Route::middleware('auth:sanctum')->delete('/profileImage', [ProfileImageController::class, 'destroy']);
 // Profile end
 
 // Referral Start

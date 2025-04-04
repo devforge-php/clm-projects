@@ -41,7 +41,7 @@ class ReferralServices
             return ['error' => 'Referal kod egasi topilmadi!', 'status' => 404];
         }
 
-        // Referrerga 2 gold qo'shish va refferals ni oshirish
+        // Referrerga 1 gold qo'shish va refferals ni oshirish
         $profile = Profile::where('user_id', $referrer->id)->first();
         if ($profile) {
             $profile->gold += 1;
@@ -57,9 +57,15 @@ class ReferralServices
             ]);
         }
 
+        // ❗️ Profil cache'ni yangilaymiz
+        Cache::forget("profile_{$referrer->id}");
+
         // Foydalanuvchi ushbu koddan foydalanganini belgilaymiz (cache bilan)
         Cache::put("user_{$user->id}_used_referral", true, now()->addDays(30));
 
-        return ['message' => 'Referal kod muvaffaqiyatli ishlatildi, foydalanuvchiga 1 gold qo\'shildi!', 'status' => 200];
+        return [
+            'message' => 'Referal kod muvaffaqiyatli ishlatildi, foydalanuvchiga 1 gold qo\'shildi!',
+            'status' => 200
+        ];
     }
 }

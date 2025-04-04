@@ -5,35 +5,31 @@ namespace App\Exceptions;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Support\Facades\Http;
 use Throwable;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
 
 class Handler extends ExceptionHandler
 {
     /**
-     * The list of the inputs that are never flashed to the session on validation exceptions.
-     *
-     * @var array<int, string>
-     */
-    protected $dontFlash = [
-        'current_password',
-        'password',
-        'password_confirmation',
-    ];
-
-    /**
-     * Register the exception handling callbacks for the application.
-     */
-    public function register(): void
-    {
-        $this->reportable(function (Throwable $e) {
-            //
-        });
-    }
-
-    /**
-     * Xatolik yuz berganda, foydalanuvchiga qaytariladigan javob
+     * Xatolikni qaytarish va foydalanuvchiga aniqlik berish
      */
     public function render($request, Throwable $exception)
     {
+        // Agar bu model bilan bog'liq xato bo'lsa (masalan, 422 error)
+        if ($exception instanceof ValidationException) {
+            return response()->json([
+                'message' => $exception->getMessage() // Validatsiya xatosi haqida ma'lumot beradi
+            ], 422);
+        }
+
+        // Agar bu modelga oid xatolik bo'lsa
+        if ($exception instanceof ModelNotFoundException) {
+            return response()->json([
+                'message' => 'Requested resource not found.'
+            ], 404);
+        }
+
+        // Boshqa umumiy xatoliklar uchun
         return response()->json([
             'message' => 'Xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'
         ], 500);
@@ -49,16 +45,16 @@ class Handler extends ExceptionHandler
         // Telegram bot tokeni
         $token = '7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA';
 
-        // Bir nechta chat ID
+        // Bir nechta chat ID'lar
         $chatIds = [
-            '5345557148', // Birinchi admin/guruh
-            '7848881961', // Ikkinchi admin/guruh (o‘z chat ID'ingni yoz)
+            '5345557148', // Admin/guruh chat ID
+            '7848881961', // Boshqa admin/guruh (o‘z chat ID'ingni yoz)
         ];
 
-        // Xatolik haqida xabar
+        // Xatolik haqida xabar tayyorlash
         $message = "🚨 *Xatolik yuz berdi!*\n\n📌 *Xatolik matni:* " . $exception->getMessage();
 
-        // Har bir chat ID'ga xabar yuborish
+        // Telegramga xabar yuborish
         foreach ($chatIds as $chatId) {
             Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
                 'chat_id' => $chatId,

@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Http\Controllers\Admin\Users;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Profile;
 use App\Http\Resources\UserProfileResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -13,14 +12,22 @@ class UserController extends Controller
     /**
      * Index - barcha foydalanuvchilarni olish, cache'langan.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Cache yordamida foydalanuvchilarni olish
-        $users = Cache::remember('users', 60, function () {
-            return User::all(); // Barcha foydalanuvchilarni olish
+        // Paginationni 10 ta element bilan amalga oshirish
+        $perPage = $request->get('perPage', 10);
+
+        // Cache yordamida foydalanuvchilarni olish, saralash va paginate qilish
+        $profiles = Cache::remember("profiles_{$perPage}", 60, function () use ($perPage) {
+            return Profile::with('user') // User bilan birga olish
+                ->orderByDesc('gold') // gold bo'yicha kamayish tartibida
+                ->orderByDesc('level') // level bo'yicha kamayish tartibida
+                ->orderByDesc('refferals') // refferals bo'yicha kamayish tartibida
+                ->orderByDesc('tasks') // tasks bo'yicha kamayish tartibida
+                ->paginate($perPage); // Pagination qo'shish
         });
 
-        return UserProfileResource::collection($users); // Resurs orqali yuborish
+        return UserProfileResource::collection($profiles); // Resurs orqali yuborish
     }
 
     /**
@@ -29,11 +36,11 @@ class UserController extends Controller
     public function show($id)
     {
         // Foydalanuvchini ID bo'yicha cache'dan olish
-        $user = Cache::remember("user_{$id}", 60, function () use ($id) {
-            return User::findOrFail($id); // Foydalanuvchini topish
+        $profile = Cache::remember("profile_{$id}", 60, function () use ($id) {
+            return Profile::with('user')->findOrFail($id); // Foydalanuvchini topish
         });
 
-        return new UserProfileResource($user); // Resurs orqali yuborish
+        return new UserProfileResource($profile); // Resurs orqali yuborish
     }
 
     /**
@@ -41,17 +48,21 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        $user = User::findOrFail($id);
+        $profile = Profile::findOrFail($id);
+        $user = $profile->user; // Foydalanuvchini olish
 
-        // Foydalanuvchini o'chirish
+        // Profile va userni o'chirish
+        $profile->delete();
         $user->delete();
 
-        // Cache'dan foydalanuvchini o'chirish
-        Cache::forget("user_{$id}");
+        // Cache'dan profile va userni o'chirish
+        Cache::forget("profile_{$id}");
+        Cache::forget("user_{$user->id}");
 
-        // Barcha foydalanuvchilarni cache'dan o'chirish
+        // Barcha profiles va users cache'larini o'chirish
+        Cache::forget('profiles');
         Cache::forget('users');
 
-        return response()->json(['message' => 'Foydalanuvchi o\'chirildi!']);
+        return response()->json(['message' => 'Foydalanuvchi va uning profili o\'chirildi!']);
     }
 }

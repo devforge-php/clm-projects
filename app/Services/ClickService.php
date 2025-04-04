@@ -25,7 +25,8 @@ class ClickService
     }
 
     public function generatePaymentUrl($quantity)
-    {
+{
+    try {
         if ($quantity != 5) {
             return false;
         }
@@ -47,36 +48,36 @@ class ClickService
         }
 
         DB::beginTransaction();
-        try {
-            $amount = $quantity * 5000;
-            $transaction_id = Str::uuid();
+        $amount = $quantity * 5000;
+        $transaction_id = Str::uuid();
 
-            $payment = Payment::create([
-                'user_id' => $user->id,
-                'type' => 'gold',
-                'quantity' => $quantity,
-                'amount' => $amount,
-                'transaction_id' => $transaction_id,
-                'status' => 'pending'
-            ]);
+        $payment = Payment::create([
+            'user_id' => $user->id,
+            'type' => 'gold',
+            'quantity' => $quantity,
+            'amount' => $amount,
+            'transaction_id' => $transaction_id,
+            'status' => 'pending'
+        ]);
 
-            $returnUrl = route('payment.callback', [], true);
-            $paymentUrl = "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
+        $returnUrl = route('payment.callback', [], true);
+        $paymentUrl = "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
 
-            Cache::put($cacheKey, $paymentUrl, 86400);
-            
-            DB::commit();
-            return $paymentUrl;
+        Cache::put($cacheKey, $paymentUrl, 86400);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Payment yaratishda xatolik: " . $e->getMessage());
-            return false;
-        }
+        DB::commit();
+        return $paymentUrl;
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Payment yaratishda xatolik: " . $e->getMessage());
+        return false;
     }
+}
 
-    public function processPayment($request)
-    {
+public function processPayment($request)
+{
+    try {
         if (!$this->verifySignature($request)) {
             Log::warning("Invalid Click signature", $request->all());
             return false;
@@ -92,7 +93,13 @@ class ClickService
         }
 
         return $this->handlePaymentStatus($payment, $request->status);
+
+    } catch (\Exception $e) {
+        Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
+        return false;
     }
+}
+
 
     private function handlePaymentStatus($payment, $status)
     {

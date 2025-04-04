@@ -28,20 +28,7 @@ class ProfileController extends Controller
 
         return response()->json(new ProfileResource($profile));
     }
-    
-    public function update(Request $request)
-    {
-        $userId = auth()->id();
-        $data = $request->only(['image']);
-
-        $profile = $this->profileService->updateProfileImage($userId, $data);
-
-        if (!$profile) {
-            return response()->json(['error' => 'Profil rasmni yangilashda xatolik yuz berdi'], 400);
-        }
-
-        return response()->json(['data' => new ProfileResource($profile)]);
-    }
+  
 
     public function updateprofile(Request $request)
     {

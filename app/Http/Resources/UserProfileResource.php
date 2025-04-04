@@ -16,23 +16,22 @@ class UserProfileResource extends JsonResource
     {
         return [
             'user' => [
-                'firstname' => $this->firstname,
-                'lastname' => $this->lastname,
-                'username' => $this->username,
-                'city' => $this->city,
-                'phone' => $this->phone,
-                'email' => $this->email,
+                'firstname' => $this->user?->firstname,  // $this->user orqali user ma'lumotini olish
+                'lastname'  => $this->user?->lastname,
+                'username'  => $this->user?->username,
+                'city'      => $this->user?->city,
+                'phone'     => $this->user?->phone,
+                'email'     => $this->user?->email,
             ],
             'profile' => [
-                'image' => $this->profile?->image, 
-                'gold' => (int) ($this->profile?->gold ?? 0),
-                'tasks' => (int) ($this->profile?->tasks ?? 0),
-                'refferals' => (int) ($this->profile?->refferals ?? 0),
-                'level' => (int) ($this->profile?->level ?? 0),
-                'created_at' => optional($this->profile?->created_at)->toISOString(),
-                'updated_at' => optional($this->profile?->updated_at)->toISOString(),
+                'image'      => $this->image, 
+                'gold'       => (int) ($this->gold ?? 0),
+                'tasks'      => (int) ($this->tasks ?? 0),
+                'refferals'  => (int) ($this->refferals ?? 0),
+                'level'      => (int) ($this->level ?? 0),
+                'created_at' => optional($this->created_at)->toISOString(),
+                'updated_at' => optional($this->updated_at)->toISOString(),
             ],
         ];
     }
-    
 }

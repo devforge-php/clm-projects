@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Events\ProfileUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Profile extends Model
 {
@@ -25,7 +26,15 @@ class Profile extends Model
                 return;
             }
 
+            // Cache'ni tozalash
+            Cache::flush(); // Barcha cache'ni tozalash
+
             event(new ProfileUpdated($profile));
         });
+
+        static::created(function ($profile) {
+            // Yangi profil qo'shilganda ham cache'ni tozalash
+            Cache::flush(); // Barcha cache'ni tozalash
+        });
     }
-} 
+}

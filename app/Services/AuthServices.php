@@ -4,63 +4,77 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use App\Jobs\ProcessUserRegistration;
 
 class AuthServices
 {
-    public function register(array $data): User
+    public function register(array $data)
     {
-        // Email unikal tekshirishni cache qilish
-        if (Cache::has('email_' . $data['email'])) {
-            abort(422, 'Email already taken');
+        try {
+            // Email unikal bo'lishi kerak
+            if (User::where('email', $data['email'])->exists()) {
+                abort(422, 'Email already taken');
+            }
+
+            // Phone unikal bo'lishi kerak
+            if (User::where('phone', $data['phone'])->exists()) {
+                abort(422, 'Phone number already taken');
+            }
+
+            // Username unikal bo'lishi kerak
+            if (User::where('username', $data['username'])->exists()) {
+                abort(422, 'Username already taken');
+            }
+
+            // Agar barcha unikal tekshiruvlar muvaffaqiyatli bo'lsa, foydalanuvchi yaratish
+            ProcessUserRegistration::dispatch($data);
+
+        } catch (\Exception $e) {
+            throw new \Exception('User creation failed: ' . $e->getMessage());
         }
-
-        if (User::where('email', $data['email'])->exists()) {
-            Cache::put('email_' . $data['email'], true, 60);
-            abort(422, 'Email already taken');
-        }
-
-        // Background jobga user yaratish
-        ProcessUserRegistration::dispatch($data);
-
-        return new User([
-            'firstname' => $data['firstname'],
-            'lastname' => $data['lastname'],
-            'username' => $data['username'],
-            'city' => $data['city'],
-            'phone' => $data['phone'],
-            'email' => $data['email']
-        ]);
     }
 
     public function login(array $credentials): ?string
     {
-        if (!Auth::attempt($credentials)) {
-            return null;
-        }
+        try {
+            if (!Auth::attempt($credentials)) {
+                return null;
+            }
 
-        // Token yaratishda userni oldindan yuklash
-        $user = Auth::user()->load('tokens');
-        return $user->createToken('authToken')->plainTextToken;
+            // Token yaratishda userni oldindan yuklash
+            $user = Auth::user()->load('tokens');
+            return $user->createToken('authToken')->plainTextToken;
+
+        } catch (\Exception $e) {
+            throw new \Exception('Login failed: ' . $e->getMessage());
+        }
     }
 
     public function logout(): void
     {
-        Auth::user()->tokens()->delete();
+        try {
+            Auth::user()->tokens()->delete();
+        } catch (\Exception $e) {
+            throw new \Exception('Logout failed: ' . $e->getMessage());
+        }
     }
+
     public function deleteAccount(): void
-{
-    $user = Auth::user();
+    {
+        try {
+            $user = Auth::user();
 
-    if (!$user) {
-        abort(401, 'Unauthorized');
+            if (!$user) {
+                abort(401, 'Unauthorized');
+            }
+
+            // Foydalanuvchini o‘chirish
+            $user->tokens()->delete();
+            $user->delete();
+
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to delete account: ' . $e->getMessage());
+        }
     }
-
-    // Foydalanuvchini o‘chirish
-    $user->tokens()->delete();
-    $user->delete();
-}
-
 }
