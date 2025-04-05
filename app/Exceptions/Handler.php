@@ -38,6 +38,7 @@ class Handler extends ExceptionHandler
         ], 500);
     }
     
+    
 
     /**
      * Xatolikni qayd etish va Telegramga yuborish
