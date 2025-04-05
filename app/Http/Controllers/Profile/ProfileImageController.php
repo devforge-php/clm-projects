@@ -3,120 +3,109 @@
 namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserProfileResource;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class ProfileImageController extends Controller
 {
+    // Rasmni olish
     public function index()
     {
-        try {
-            $userId   = auth()->id();
-            $cacheKey = "profile_image_{$userId}";
-            $profile  = Cache::get($cacheKey);
-
-            if (! $profile) {
-                $profile = Profile::where('user_id', $userId)->first();
-                if ($profile && $profile->image) {
-                    Cache::put($cacheKey, $profile, now()->addMinutes(10));
-                }
+        $userId = auth()->id();
+        
+        // Keshdan foydalanuvchi rasm ma'lumotlarini olish
+        $cacheKey = "profile_image_{$userId}";
+        $profile = Cache::get($cacheKey);
+    
+        // Agar keshda mavjud bo'lmasa, bazadan olish
+        if (!$profile) {
+            $profile = Profile::where('user_id', $userId)->first();
+            
+            if ($profile && $profile->image) {
+                // Keshga saqlash
+                Cache::put($cacheKey, $profile, now()->addMinutes(10));  // 10 daqiqa davomida saqlash
             }
-
-            if (! $profile || ! $profile->image) {
-                return response()->json(['error' => 'Rasm topilmadi'], 404);
-            }
-
-            return response()->json([
-                'image_url' => asset('storage/' . $profile->image),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error("ProfileImageController@index error: " . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            if (config('app.debug')) {
-                return response()->json(['error' => $e->getMessage()], 500);
-            }
-
-            return response()->json(['error' => 'Server xatosi'], 500);
         }
+    
+        if (!$profile || !$profile->image) {
+            return response()->json(['error' => 'Rasm topilmadi'], 404);
+        }
+    
+        return new UserProfileResource($profile);
     }
 
+    // Yangi rasm qo'shish
     public function store(Request $request)
     {
-        try {
-            $userId  = auth()->id();
-            $profile = Profile::where('user_id', $userId)->first();
-
-            if ($profile && $profile->image) {
-                return response()->json(['error' => 'Sizda allaqachon rasm mavjud.'], 400);
-            }
-
-            if (! $request->hasFile('image')) {
-                return response()->json(['error' => 'Rasm fayli topilmadi'], 400);
-            }
-
+        $userId = auth()->id();
+    
+        // Foydalanuvchi profili borligini tekshirish
+        $profile = Profile::where('user_id', $userId)->first();
+    
+        // Agar rasm mavjud bo'lsa, yangisini yaratmasin
+        if ($profile && $profile->image) {
+            return response()->json(['error' => 'Sizda allaqachon rasm mavjud. Faqat bitta rasm saqlanadi.'], 400);
+        }
+    
+        // Yangi rasmni saqlash
+        if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('profiles', 'public');
-
+    
+            // Agar profil mavjud bo'lsa, rasmni yangilash
             if ($profile) {
+                // Eski rasmni o'chirish
                 if ($profile->image) {
                     Storage::disk('public')->delete($profile->image);
                 }
+    
+                // Yangi rasmni saqlash
                 $profile->image = $imagePath;
                 $profile->save();
             } else {
+                // Agar profil bo'lmasa, yangi profil yaratish
                 Profile::create([
                     'user_id' => $userId,
-                    'image'   => $imagePath,
+                    'image' => $imagePath
                 ]);
             }
-
-            Cache::forget("profile_image_{$userId}");
-
-            return response()->json(['message' => 'Rasm muvaffaqiyatli yuklandi.']);
-        } catch (\Throwable $e) {
-            Log::error("ProfileImageController@store error: " . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            if (config('app.debug')) {
-                return response()->json(['error' => $e->getMessage()], 500);
-            }
-
-            return response()->json(['error' => 'Server xatosi'], 500);
+    
+            // Keshni yangilash
+            Cache::forget("profile_image_{$userId}");  // Eski keshni o'chirish
+            // Yangilangan profilni resurs sifatida qaytarish
+            return new UserProfileResource(Profile::where('user_id', $userId)->first());
         }
+    
+        return response()->json(['error' => 'Rasm fayli topilmadi'], 400);
     }
+    
+
+    // Rasmni yangilash
+ 
+    
 
     public function destroy()
     {
-        try {
-            $userId  = auth()->id();
-            $profile = Profile::where('user_id', $userId)->first();
-
-            if (! $profile || ! $profile->image) {
-                return response()->json(['error' => 'Rasm topilmadi.'], 404);
-            }
-
-            Storage::disk('public')->delete($profile->image);
-            $profile->image = null;
-            $profile->save();
-
-            Cache::forget("profile_image_{$userId}");
-
-            return response()->json(['message' => 'Rasm muvaffaqiyatli o\'chirildi.']);
-        } catch (\Throwable $e) {
-            Log::error("ProfileImageController@destroy error: " . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            if (config('app.debug')) {
-                return response()->json(['error' => $e->getMessage()], 500);
-            }
-
-            return response()->json(['error' => 'Server xatosi'], 500);
+        $userId = auth()->id();
+        $profile = Profile::where('user_id', $userId)->first();
+    
+        if (!$profile || !$profile->image) {
+            return response()->json(['error' => 'Rasm topilmadi.'], 404);
         }
+    
+        // Eski rasmni o'chirish
+        Storage::disk('public')->delete($profile->image);
+    
+        // Profilni yangilash
+        $profile->image = null;
+        $profile->save();
+    
+        // Keshni yangilash
+        Cache::forget("profile_image_{$userId}");  // Keshni o'chirish
+    
+        return response()->json(['message' => 'Rasm muvaffaqiyatli o\'chirildi.']);
     }
+    
 }
