@@ -15,25 +15,29 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // Agar bu model bilan bog'liq xato bo'lsa (masalan, 422 error)
         if ($exception instanceof ValidationException) {
             return response()->json([
-                'message' => $exception->getMessage() // Validatsiya xatosi haqida ma'lumot beradi
+                'message' => $exception->getMessage()
             ], 422);
         }
-
-        // Agar bu modelga oid xatolik bo'lsa
+    
         if ($exception instanceof ModelNotFoundException) {
             return response()->json([
                 'message' => 'Requested resource not found.'
             ], 404);
         }
-
-        // Boshqa umumiy xatoliklar uchun
+    
+        if (config('app.debug')) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], 500);
+        }
+    
         return response()->json([
             'message' => 'Xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'
         ], 500);
     }
+    
 
     /**
      * Xatolikni qayd etish va Telegramga yuborish
