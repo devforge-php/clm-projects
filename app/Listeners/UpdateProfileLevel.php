@@ -27,8 +27,8 @@ class UpdateProfileLevel
         $level = $profile->level;
     
         // Yangi levelni hisoblash
-        if ($profile->gold >= 5) {
-            $level += 5;
+        if ($profile->gold >= 1) {
+            $level += 1;
         }
     
     
