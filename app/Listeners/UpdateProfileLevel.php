@@ -22,20 +22,15 @@ class UpdateProfileLevel
     public function handle(ProfileUpdated $event)
     {
         $profile = $event->profile;
-    
-        // Oldingi levelni olish
-        $level = $profile->level;
-    
+        
         // Yangi levelni hisoblash
-        if ($profile->gold >= 1) {
-            $level += 1;
-        }
-    
-    
+        $level = (int) $profile->gold;  // Gold miqdori bo'yicha levelni aniqlash
+        
         // Agar level o'zgargan bo'lsa, update qilamiz
         if ($profile->level !== $level) {
             $profile->update(['level' => $level]);
         }
     }
+    
     
 }
