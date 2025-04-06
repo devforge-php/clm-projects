@@ -2,39 +2,38 @@
 
 namespace App\Models;
 
-use App\Events\ProfileUpdated;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 
 class Profile extends Model
 {
     use HasFactory;
- 
-    protected $fillable =  ['user_id', 'gold', 'tasks', 'refferals', 'level'];
+
+    // level endi DB-da saqlanmaydi, faqat accessor orqali olinadi
+    protected $fillable = [
+        'user_id',
+        'gold',
+        'tasks',
+        'refferals',
+    ];
+
+    protected $casts = [
+        'gold'      => 'integer',
+        'tasks'     => 'integer',
+        'refferals' => 'integer',
+    ];
+
+    // JSON response’larda level ham qaytsin
+    protected $appends = ['level'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    protected static function booted()
+    // Har safar $profile->level chaqirilganda gold qiymatini qaytaradi
+    public function getLevelAttribute(): int
     {
-        static::updated(function ($profile) {
-            // Agar faqat level o'zgargan bo'lsa, eventni chaqirmaymiz
-            if ($profile->wasChanged('level')) {
-                return;
-            }
-
-            // Cache'ni tozalash
-            Cache::flush(); // Barcha cache'ni tozalash
-
-            event(new ProfileUpdated($profile));
-        });
-
-        static::created(function ($profile) {
-            // Yangi profil qo'shilganda ham cache'ni tozalash
-            Cache::flush(); // Barcha cache'ni tozalash
-        });
+        return $this->gold;
     }
 }

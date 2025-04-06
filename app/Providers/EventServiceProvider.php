@@ -31,9 +31,9 @@ class EventServiceProvider extends ServiceProvider
        ReferralEvent::class => [
         ReferralListener::class,
     ],
-    ProfileUpdated::class => [
-        UpdateProfileLevel::class,
-    ],
+    // 'App\Events\ProfileUpdated' => [
+    //     'App\Listeners\UpdateProfileLevel',
+    // ],
     TelegramAdmin::class => [
         TelegramListener::class,
     ],
