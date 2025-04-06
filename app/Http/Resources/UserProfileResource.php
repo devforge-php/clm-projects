@@ -16,6 +16,7 @@ class UserProfileResource extends JsonResource
     {
         return [
             'user' => [
+                'id' => $this->user->id,
                 'firstname' => $this->user?->firstname,  // $this->user orqali user ma'lumotini olish
                 'lastname'  => $this->user?->lastname,
                 'username'  => $this->user?->username,

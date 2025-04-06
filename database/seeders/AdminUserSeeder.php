@@ -19,8 +19,8 @@ class AdminUserSeeder extends Seeder
             'username' => 'admin',
             'city' => 'Tashkent',
             'phone' => '998901234567',
-            'email' => 'Javohir@gmail.com',
-            'password' => Hash::make('Azizbek98701'), // Parolni hash qilish
+            'email' => 'clm@gmail.com',
+            'password' => Hash::make('cjlamim'), // Parolni hash qilish
             'role' => 'admin', // Role: admin
             'created_at' => now(),
             'updated_at' => now(),
