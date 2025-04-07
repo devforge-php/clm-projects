@@ -9,12 +9,12 @@ class Profile extends Model
 {
     use HasFactory;
 
-    // level endi DB-da saqlanmaydi, faqat accessor orqali olinadi
     protected $fillable = [
         'user_id',
         'gold',
         'tasks',
         'refferals',
+        'image',  // 'image' maydoni qo'shildi
     ];
 
     protected $casts = [
@@ -23,17 +23,21 @@ class Profile extends Model
         'refferals' => 'integer',
     ];
 
-    // JSON response’larda level ham qaytsin
     protected $appends = ['level'];
-  
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Har safar $profile->level chaqirilganda gold qiymatini qaytaradi
     public function getLevelAttribute(): int
     {
         return $this->gold;
+    }
+
+    // Rasm uchun accessor qo'shish
+    public function getImageUrlAttribute()
+    {
+        return asset('storage/' . $this->image);
     }
 }

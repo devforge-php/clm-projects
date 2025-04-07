@@ -84,8 +84,6 @@ class ProfileImageController extends Controller
 
     // Rasmni yangilash
  
-    
-
     public function destroy()
     {
         $userId = auth()->id();
@@ -107,5 +105,4 @@ class ProfileImageController extends Controller
     
         return response()->json(['message' => 'Rasm muvaffaqiyatli o\'chirildi.']);
     }
-    
 }
