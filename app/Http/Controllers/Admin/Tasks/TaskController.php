@@ -22,6 +22,7 @@ class TaskController extends Controller
     public function index()
     {
         $tasks = $this->taskService->getAllTasks();
+        // Model accessor ishlaydi: image_url qaytadi
         return response()->json(['data' => $tasks]);
     }
 
@@ -52,7 +53,10 @@ class TaskController extends Controller
     public function update(TaskRequest $request, string $id)
     {
         $task = $this->taskService->updateTask($request, $id);
-        return response()->json(['message' => 'Task updated successfully', 'task' => $task]);
+        return response()->json([
+            'message' => 'Task updated successfully',
+            'task' => $task
+        ]);
     }
 
     /**

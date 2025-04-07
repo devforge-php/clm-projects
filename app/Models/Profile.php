@@ -24,8 +24,15 @@ class Profile extends Model
     ];
 
     // JSON response’larda level ham qaytsin
-    protected $appends = ['level'];
+    protected $appends = ['level', 'image_url'];
 
+    public function getImageUrlAttribute()
+    {
+        return $this->image
+            ? asset('storage/' . $this->image)
+            : null;
+    }
+  
     public function user()
     {
         return $this->belongsTo(User::class);
