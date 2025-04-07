@@ -11,8 +11,8 @@ use App\Http\Controllers\UserTasks\UserTaskController;
 use Illuminate\Support\Facades\Route;
 
 // Auth start
-Route::post('register', [AuthController::class, 'register'])->middleware('throttle:10,1');
-Route::post('login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
@@ -21,11 +21,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Auth end
 
 // Profile start
-Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('profile', [ProfileController::class, 'show']);
-
     Route::post('profile', [ProfileController::class, 'updateprofile']);
-
     Route::get('socialMedia', [SocialMediaController::class, 'index']);
     Route::post('socialMedia', [SocialMediaController::class, 'store']);
     Route::put('socialMedia/{id}', [SocialMediaController::class, 'update']);
@@ -36,19 +34,19 @@ Route::middleware('auth:sanctum')->delete('/profileImage', [ProfileImageControll
 // Profile end
 
 // Referral Start
-Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('referral', [ReferralController::class, 'index']);
     Route::post('referral-code', [ReferralController::class, 'useReferralCode']);
 });
 // Referral End
 
 // Click start (to‘lovlar)
-Route::middleware(['auth:sanctum', 'throttle:5,1'])->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
+Route::middleware(['auth:sanctum'])->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
 Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback'); // ochiq qolishi kerak
 // Click end
 
 // Tasks start
-Route::middleware(['auth:sanctum', 'throttle:30,1'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/tasks', [UserTaskController::class, 'index']);
     Route::post('/tasks/verify', [UserTaskController::class, 'verifyTask']);
 });
