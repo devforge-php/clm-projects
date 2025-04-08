@@ -16,23 +16,23 @@ class UserProfileResource extends JsonResource
     {
         return [
             'user' => [
-                'id' => $this->user->id,
-                'firstname' => $this->user?->firstname,  // $this->user orqali user ma'lumotini olish
-                'lastname'  => $this->user?->lastname,
-                'username'  => $this->user?->username,
-                'city'      => $this->user?->city,
-                'phone'     => $this->user?->phone,
-                'email'     => $this->user?->email,
+                'id'        => $this->user->id,
+                'firstname' => $this->user->firstname,
+                'lastname'  => $this->user->lastname,
+                'username'  => $this->user->username,
+                'city'      => $this->user->city,
+                'phone'     => $this->user->phone,
+                'email'     => $this->user->email,
             ],
             'profile' => [
-                'image'      => $this->image, 
-                'gold'       => (int) ($this->gold ?? 0),
-                'tasks'      => (int) ($this->tasks ?? 0),
-                'refferals'  => (int) ($this->refferals ?? 0),
-                'level'      => (int) ($this->level ?? 0),
-                'created_at' => optional($this->created_at)->toISOString(),
-                'updated_at' => optional($this->updated_at)->toISOString(),
-            ],
+                'image_url'  => $this->image_url, // ⭐️ MUHIM QATOR!
+                'gold'       => $this->gold,
+                'tasks'      => $this->tasks,
+                'refferals'  => $this->refferals,
+                'level'      => $this->level,
+                'created_at' => $this->created_at,
+                'updated_at' => $this->updated_at,
+            ]
         ];
     }
 }

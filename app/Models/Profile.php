@@ -14,7 +14,7 @@ class Profile extends Model
         'gold',
         'tasks',
         'refferals',
-        'image',  // 'image' maydoni qo'shildi
+        'image',
     ];
 
     protected $casts = [
@@ -23,7 +23,7 @@ class Profile extends Model
         'refferals' => 'integer',
     ];
 
-    protected $appends = ['level'];
+    protected $appends = ['level', 'image_url'];
 
     public function user()
     {
@@ -35,9 +35,8 @@ class Profile extends Model
         return $this->gold;
     }
 
-    // Rasm uchun accessor qo'shish
     public function getImageUrlAttribute()
     {
-        return asset('storage/' . $this->image);
+        return $this->image ? asset('storage/' . $this->image) : null;
     }
 }

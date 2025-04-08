@@ -15,22 +15,24 @@ class ProfileResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-                'user' => [
-                    'id' => $this->user->id,
-                    'firstname' => $this->user->firstname,
-                    'lastname' => $this->user->lastname,
-                    'username' => $this->user->username,
-                    'city' => $this->user->city,
-                    'phone' => $this->user->phone,
-                    'email' => $this->user->email,
-                ],
-            'image' => $this->image,
-            'gold' => (int) $this->gold,
-            'tasks' => (int) $this->tasks,
-            'refferals' => (int) $this->refferals,
-            'level' => (int) $this->level,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'user' => [
+                'id'        => $this->user->id,
+                'firstname' => $this->user->firstname,
+                'lastname'  => $this->user->lastname,
+                'username'  => $this->user->username,
+                'city'      => $this->user->city,
+                'phone'     => $this->user->phone,
+                'email'     => $this->user->email,
+            ],
+            'profile' => [
+                'image_url'  => $this->image_url, // ⭐️ MUHIM QATOR!
+                'gold'       => $this->gold,
+                'tasks'      => $this->tasks,
+                'refferals'  => $this->refferals,
+                'level'      => $this->level,
+                'created_at' => $this->created_at,
+                'updated_at' => $this->updated_at,
+            ]
         ];
     }
     
