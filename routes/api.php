@@ -30,7 +30,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 }); 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('profileImage', [ProfileImageController::class, 'index']);
-    Route::put('profileImage', [ProfileImageController::class, 'update']);
+    Route::post('profileImage', [ProfileImageController::class, 'update']);
+
     Route::delete('profileImage', [ProfileImageController::class, 'destroy']);
 });
 
