@@ -28,9 +28,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('socialMedia', [SocialMediaController::class, 'store']);
     Route::put('socialMedia/{id}', [SocialMediaController::class, 'update']);
 }); 
-Route::middleware('auth:sanctum')->get('/profileImage', [ProfileImageController::class, 'index']);
-Route::middleware('auth:sanctum')->post('/profileImage', [ProfileImageController::class, 'store']);
-Route::middleware('auth:sanctum')->delete('/profileImage', [ProfileImageController::class, 'destroy']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('profileImage', [ProfileImageController::class, 'index']);
+    Route::put('profileImage', [ProfileImageController::class, 'update']);
+    Route::delete('profileImage', [ProfileImageController::class, 'destroy']);
+});
+
 // Profile end
 
 // Referral Start

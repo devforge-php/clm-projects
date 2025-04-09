@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Profile extends Model
 {
@@ -39,4 +40,15 @@ class Profile extends Model
     {
         return $this->image ? asset('storage/' . $this->image) : null;
     }
+    protected static function booted()
+{
+    static::saved(function ($profile) {
+        Cache::forget("profile_image_{$profile->user_id}");
+    });
+
+    static::deleted(function ($profile) {
+        Cache::forget("profile_image_{$profile->user_id}");
+    });
+}
+
 }
