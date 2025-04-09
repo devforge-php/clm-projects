@@ -20,6 +20,7 @@ class ProfileController extends Controller
     public function show()
     {
         $userId = auth()->id();
+        // Profilni lazy loading bilan olish
         $profile = $this->profileService->getProfileByUserId($userId);
 
         if (!$profile) {
@@ -28,7 +29,6 @@ class ProfileController extends Controller
 
         return response()->json(new ProfileResource($profile));
     }
-  
 
     public function updateprofile(Request $request)
     {
