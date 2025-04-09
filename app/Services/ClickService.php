@@ -25,55 +25,60 @@ class ClickService
     }
 
     public function generatePaymentUrl($quantity)
-{
-    try {
-        if ($quantity != 5) {
+    {
+        try {
+            if ($quantity != 5) {
+                return false;
+            }
+    
+            $user = auth()->user();
+            $cacheKey = "user_{$user->id}_last_purchase";
+    
+            // Foydalanuvchi allaqachon to'lov qilgan bo'lsa, yangi URL yaratmaslik kerak
+            if (Cache::has($cacheKey)) {
+                return Cache::get($cacheKey);
+            }
+    
+            $oneWeekAgo = Carbon::now()->subDays(7);
+            $purchaseCount = Payment::where('user_id', $user->id)
+                ->where('created_at', '>=', $oneWeekAgo)
+                ->count();
+    
+            // Agar foydalanuvchi 4 ta to'lovdan ko'p qilgan bo'lsa, yangi to'lov yaratmaslik kerak
+            if ($purchaseCount >= 4) {
+                return false;
+            }
+    
+            DB::beginTransaction();
+            $amount = $quantity * 1000;
+            $transaction_id = Str::uuid();
+    
+            // Yangi to'lov yaratish
+            $payment = Payment::create([
+                'user_id' => $user->id,
+                'type' => 'gold',
+                'quantity' => $quantity,
+                'amount' => $amount,
+                'transaction_id' => $transaction_id,
+                'status' => 'pending'
+            ]);
+    
+            $returnUrl = route('payment.callback', [], true);
+            $paymentUrl = "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
+    
+            // URLni Cache'ga saqlash
+            Cache::put($cacheKey, $paymentUrl, 86400); // 24 soat davomida saqlash
+    
+            DB::commit();
+            return $paymentUrl;
+    
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Payment yaratishda xatolik: " . $e->getMessage());
             return false;
         }
-
-        $user = auth()->user();
-        $cacheKey = "user_{$user->id}_last_purchase";
-
-        if (Cache::has($cacheKey)) {
-            return Cache::get($cacheKey);
-        }
-
-        $oneWeekAgo = Carbon::now()->subDays(7);
-        $purchaseCount = Payment::where('user_id', $user->id)
-            ->where('created_at', '>=', $oneWeekAgo)
-            ->count();
-
-        if ($purchaseCount >= 4) {
-            return false;
-        }
-
-        DB::beginTransaction();
-        $amount = $quantity * 1000;
-        $transaction_id = Str::uuid();
-
-        $payment = Payment::create([
-            'user_id' => $user->id,
-            'type' => 'gold',
-            'quantity' => $quantity,
-            'amount' => $amount,
-            'transaction_id' => $transaction_id,
-            'status' => 'pending'
-        ]);
-
-        $returnUrl = route('payment.callback', [], true);
-        $paymentUrl = "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
-
-        Cache::put($cacheKey, $paymentUrl, 86400);
-
-        DB::commit();
-        return $paymentUrl;
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error("Payment yaratishda xatolik: " . $e->getMessage());
-        return false;
     }
-}
+    
 
 public function processPayment($request)
 {

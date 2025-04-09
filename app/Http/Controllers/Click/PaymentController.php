@@ -18,21 +18,22 @@ class PaymentController extends Controller
     public function initiatePayment(Request $request)
     {
         $quantity = $request->input('quantity', 5); // Default 5 tanga
-    
+        
         try {
+            // Foydalanuvchi allaqachon to'lov qilgan bo'lsa, yangi URL yaratmaslik
             $paymentUrl = $this->clickService->generatePaymentUrl($quantity);
-    
+        
             if (!$paymentUrl) {
                 return response()->json(['message' => 'Sotib olish limiti oshib ketdi yoki noto‘g‘ri miqdor kiritildi!'], 403);
             }
-    
+        
             return response()->json(['payment_url' => $paymentUrl]);
-    
+        
         } catch (\Exception $e) {
-           
             return response()->json(['message' => 'To‘lovni yaratishda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'], 500);
         }
     }
+    
     
     public function paymentCallback(Request $request)
     {
