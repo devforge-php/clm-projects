@@ -48,7 +48,7 @@ class ClickService
         }
 
         DB::beginTransaction();
-        $amount = $quantity * 5000;
+        $amount = $quantity * 1000;
         $transaction_id = Str::uuid();
 
         $payment = Payment::create([
