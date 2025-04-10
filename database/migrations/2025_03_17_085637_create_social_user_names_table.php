@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('social_user_names', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('telegram_user_name');
-            $table->string('instagram_user_name');
-            $table->string('facebook_user_name');
-            $table->string('youtube_user_name');
-            $table->string('twitter_user_name');
+            $table->string('telegram_user_name')->nullable();
+            $table->string('instagram_user_name')->nullable();
+            $table->string('facebook_user_name')->nullable();
+            $table->string('youtube_user_name')->nullable();
+            $table->string('twitter_user_name')->nullable();
             $table->timestamps();
         });
     }
