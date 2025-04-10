@@ -45,6 +45,7 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
-    //    code saved messageresishaaaaassssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss
+    //    code saved messageresishaaaaa
+    // nega bunday bolyabdi
     }
 }
