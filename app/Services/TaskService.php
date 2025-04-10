@@ -65,12 +65,38 @@ class TaskService
     public function updateTask(TaskRequest $request, string $id)
     {
         $task = Task::findOrFail($id);
-        $task->update($request->all());
-
-        Cache::forget('tasks'); // Cache ni yangilash
-
+    
+        $imagePath = $task->image; // eski rasm saqlanadi
+    
+        if ($request->hasFile('image')) {
+            // eski rasmni o'chirish (agar mavjud bo'lsa)
+            if ($imagePath && file_exists(storage_path('app/public/' . $imagePath))) {
+                unlink(storage_path('app/public/' . $imagePath));
+            }
+    
+            $file = $request->file('image');
+            $destinationPath = storage_path('app/public/tasks');
+            $fileName = time() . '.' . $file->getClientOriginalExtension();
+            $file->move($destinationPath, $fileName);
+            $imagePath = 'tasks/' . $fileName;
+        }
+    
+        $task->update([
+            'image' => $imagePath,
+            'telegram' => $request->telegram,
+            'instagram' => $request->instagram,
+            'youtube' => $request->youtube,
+            'twitter' => $request->twitter,
+            'text' => $request->text,
+            'number' => $request->number,
+            'reward' => $request->reward,
+        ]);
+    
+        Cache::forget('tasks'); // Cache yangilanadi
+    
         return $task;
     }
+    
 
     /**
      * Delete a task

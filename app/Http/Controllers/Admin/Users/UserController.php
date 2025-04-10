@@ -33,36 +33,35 @@ class UserController extends Controller
     /**
      * Show - bitta foydalanuvchini olish, cache'langan.
      */
-    public function show($id)
+    public function show($userId)
     {
-        // Foydalanuvchini ID bo'yicha cache'dan olish
-        $profile = Cache::remember("profile_{$id}", 60, function () use ($id) {
-            return Profile::with('user')->findOrFail($id); // Foydalanuvchini topish
+        // user_id orqali profilni olish
+        $profile = Cache::remember("profile_user_{$userId}", 60, function () use ($userId) {
+            return Profile::with('user')->where('user_id', $userId)->firstOrFail();
         });
-
-        return new UserProfileResource($profile); // Resurs orqali yuborish
+    
+        return new UserProfileResource($profile);
     }
+    
 
     /**
      * Delete - foydalanuvchini o'chirish va cache'ni yangilash.
      */
-    public function destroy($id)
+    public function destroy($userId)
     {
-        $profile = Profile::findOrFail($id);
-        $user = $profile->user; // Foydalanuvchini olish
-
-        // Profile va userni o'chirish
+        $profile = Profile::where('user_id', $userId)->firstOrFail();
+        $user = $profile->user;
+    
         $profile->delete();
         $user->delete();
-
-        // Cache'dan profile va userni o'chirish
-        Cache::forget("profile_{$id}");
-        Cache::forget("user_{$user->id}");
-
-        // Barcha profiles va users cache'larini o'chirish
+    
+        Cache::forget("profile_user_{$userId}");
+        Cache::forget("user_{$userId}");
         Cache::forget('profiles');
         Cache::forget('users');
-
+    
         return response()->json(['message' => 'Foydalanuvchi va uning profili o\'chirildi!']);
     }
+    
+
 }
