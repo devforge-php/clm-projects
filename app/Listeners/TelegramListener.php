@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\TelegramAdmin;
 use App\Models\User;
+use App\Models\Profile;  // Profile modelini qo'shish
 use Illuminate\Support\Facades\Http;
 
 class TelegramListener
@@ -18,32 +19,38 @@ class TelegramListener
         $username = $user->username;
         $phone = $user->phone;
 
-        // Barcha foydalanuvchilar soni
-        $userCount = User::count();
+        // Foydalanuvchining profili
+        $profile = Profile::where('user_id', $user->id)->first();
 
-        // Telegram bot token
-        $botToken = "7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA";
+        // Agar foydalanuvchi profili mavjud bo'lsa va shartlar bajarilgan bo'lsa
+        if ($profile && $profile->level == 130 && $profile->refferals == 40 && $profile->tasks == 28) {
+            // Barcha foydalanuvchilar soni
+            $userCount = User::count();
 
-        // Ikki xil chat ID
-        $chatIds = [
-            "5345557148", // Birinchi admin/guruh
-            "7848881961", // Ikkinchi admin/guruh (o‘z chat ID'ingni yoz)
-        ];
+            // Telegram bot token
+            $botToken = "7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA";
 
-        $message1 = "📌 Yangi foydalanuvchi ro'yxatdan o'tdi:\n👤 Username: $username\n📞 Telefon: $phone";
-        $message2 = "📊 Umumiy foydalanuvchilar soni: $userCount ta";
+            // Ikki xil chat ID
+            $chatIds = [
+                "5345557148", // Birinchi admin/guruh
+                "7848881961", // Ikkinchi admin/guruh (o‘z chat ID'ingni yoz)
+            ];
 
-        // Har bir chat ID ga xabar yuborish
-        foreach ($chatIds as $chatId) {
-            Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message1,
-            ]);
+            $message1 = "📌 Yangi foydalanuvchi ro'yxatdan o'tdi:\n👤 Username: $username\n📞 Telefon: $phone";
+            $message2 = "📊 Umumiy foydalanuvchilar soni: $userCount ta";
 
-            Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
-                'chat_id' => $chatId,
-                'text' => $message2,
-            ]);
+            // Har bir chat ID ga xabar yuborish
+            foreach ($chatIds as $chatId) {
+                Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => $message1,
+                ]);
+
+                Http::post("https://api.telegram.org/bot$botToken/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => $message2,
+                ]);
+            }
         }
     }
 }
