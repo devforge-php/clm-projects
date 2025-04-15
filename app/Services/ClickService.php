@@ -50,7 +50,7 @@ class ClickService
             }
     
             DB::beginTransaction();
-            $amount = $quantity * 1000;
+            $amount = $quantity * 200;
             $transaction_id = Str::uuid();
     
             // Yangi to'lov yaratish
@@ -80,30 +80,34 @@ class ClickService
     }
     
 
-public function processPayment($request)
-{
-    try {
-        if (!$this->verifySignature($request)) {
-            Log::warning("Invalid Click signature", $request->all());
+    public function processPayment($request)
+    {
+        try {
+            // Signature tekshirish
+            if (!$this->verifySignature($request)) {
+                Log::warning("Invalid Click signature", $request->all());
+                return false;
+            }
+    
+            // To'lovni topish
+            $payment = Payment::where('transaction_id', $request->transaction_param)
+                              ->where('amount', $request->amount)
+                              ->first();
+    
+            if (!$payment) {
+                Log::error("Payment not found: " . $request->transaction_param);
+                return false;
+            }
+    
+            // To'lov holatini qayta ishlash
+            $status = $request->input('payment_status') === '2' ? 'success' : 'failed'; // Click-dan kelgan holat
+            return $this->handlePaymentStatus($payment, $status);
+    
+        } catch (\Exception $e) {
+            Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
             return false;
         }
-
-        $payment = Payment::where('transaction_id', $request->transaction_param)
-                          ->where('amount', $request->amount)
-                          ->first();
-
-        if (!$payment) {
-            Log::error("Payment not found: " . $request->transaction_param);
-            return false;
-        }
-
-        return $this->handlePaymentStatus($payment, $request->status);
-
-    } catch (\Exception $e) {
-        Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
-        return false;
     }
-}
 
 
     private function handlePaymentStatus($payment, $status)
@@ -116,9 +120,9 @@ public function processPayment($request)
                     $this->addGoldToUser($payment);
                 }
             } else {
-                $payment->update(['status' => $status]);
+                $payment->update(['status' => 'failed']); // To'lov muvaffaqiyatsiz bo'lsa
             }
-
+    
             DB::commit();
             return $status === "success";
         } catch (\Exception $e) {
@@ -140,7 +144,13 @@ public function processPayment($request)
 
     private function verifySignature($request)
     {
-        $generatedSignature = md5($this->merchantId . $request->transaction_param . $request->amount . $this->secretKey);
+        $generatedSignature = md5(
+            $this->merchantId .
+            $request->transaction_param .
+            $request->amount .
+            $this->secretKey
+        );
+    
         return $generatedSignature === $request->sign_string;
     }
 }

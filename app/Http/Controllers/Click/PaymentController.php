@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Click;
 use App\Http\Controllers\Controller;
 use App\Services\ClickService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
@@ -38,6 +39,17 @@ class PaymentController extends Controller
     public function paymentCallback(Request $request)
     {
         try {
+            // So'rov turini tekshirish va parametrlarni olish
+            $paymentStatus = $request->input('payment_status'); // Click-dan kelgan holat
+            $transactionParam = $request->input('transaction_param'); // Transaction ID
+            $amount = $request->input('amount'); // To'lov miqdori
+    
+            // Agar payment_status mavjud bo'lmasa, xato qaytarish
+            if (!$paymentStatus || !$transactionParam || !$amount) {
+                return response()->json(['message' => 'To‘lov ma’lumotlari yetarli emas!'], 400);
+            }
+    
+            // To'lovni qayta ishlash
             $result = $this->clickService->processPayment($request);
     
             if ($result) {
@@ -45,9 +57,9 @@ class PaymentController extends Controller
             }
     
             return response()->json(['message' => 'To‘lov amalga oshmadi!'], 400);
-            
+    
         } catch (\Exception $e) {
-        
+            Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
             return response()->json(['message' => 'To‘lovni qayta ishlashda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'], 500);
         }
     }
