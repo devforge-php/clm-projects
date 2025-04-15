@@ -39,17 +39,24 @@ class PaymentController extends Controller
     {
         try {
             // So'rov turini tekshirish va parametrlarni olish
-            $paymentStatus = $request->method() === 'GET' ? $request->query('payment_status') : $request->input('payment_status');
-            $transactionParam = $request->method() === 'GET' ? $request->query('transaction_param') : $request->input('transaction_param');
-            $amount = $request->method() === 'GET' ? $request->query('amount') : $request->input('amount');
-            $signString = $request->method() === 'GET' ? $request->query('sign_string') : $request->input('sign_string');
-
+            if ($request->method() === 'GET') {
+                $paymentStatus = $request->query('payment_status');
+                $transactionParam = $request->query('transaction_param', $request->query('payment_id'));
+                $amount = $request->query('amount');
+                $signString = $request->query('sign_string');
+            } else {
+                $paymentStatus = $request->input('payment_status');
+                $transactionParam = $request->input('transaction_param', $request->input('payment_id'));
+                $amount = $request->input('amount');
+                $signString = $request->input('sign_string');
+            }
+    
             // Kerakli parametrlar mavjudligini tekshirish
             if (!$paymentStatus || !$transactionParam || !$amount || !$signString) {
                 Log::warning("Callback received incomplete data", $request->all());
                 return response()->json(['message' => 'To‘lov ma’lumotlari yetarli emas!'], 400);
             }
-
+    
             // Parametrlarni request obyektiga qo'shish
             $request->merge([
                 'payment_status' => $paymentStatus,
@@ -57,16 +64,16 @@ class PaymentController extends Controller
                 'amount' => $amount,
                 'sign_string' => $signString,
             ]);
-
+    
             // To'lovni qayta ishlash
             $result = $this->clickService->processPayment($request);
-
+    
             if ($result) {
                 return response()->json(['message' => 'To‘lov muvaffaqiyatli amalga oshdi']);
             }
-
+    
             return response()->json(['message' => 'To‘lov amalga oshmadi!'], 400);
-
+    
         } catch (\Exception $e) {
             Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
             return response()->json(['message' => 'To‘lovni qayta ishlashda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'], 500);

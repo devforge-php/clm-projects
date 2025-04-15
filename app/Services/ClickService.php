@@ -151,7 +151,8 @@ class ClickService
             $request->amount .
             $this->secretKey
         );
-
+        Log::info("Generated Signature: " . $generatedSignature);
+        Log::info("Received Signature: " . $request->sign_string);
         return $generatedSignature === $request->sign_string;
     }
 }
