@@ -44,7 +44,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
 // Click start (to‘lovlar)
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
-Route::match(['get', 'post'], '/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback'); // GET va POST ni qo'llab-quvvatlash
+Route::match(['get', 'post'], '/payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
 // Click end
 
 // Tasks start
