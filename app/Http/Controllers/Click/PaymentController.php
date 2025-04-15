@@ -9,32 +9,24 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
-    protected $clickService;
-
-    public function __construct(ClickService $clickService)
-    {
-        $this->clickService = $clickService;
-    }
+    public function __construct(private ClickService $clickService) {}
 
     public function initiatePayment(Request $request)
     {
-        $quantity = $request->input('quantity', 5); // Default qiymat: 5 tanga
+        $quantity = $request->input('quantity', 5);
 
         try {
-            $paymentUrl = $this->clickService->generatePaymentUrl($quantity);
-
-            if (!$paymentUrl) {
+            $url = $this->clickService->generatePaymentUrl($quantity);
+            if (!$url) {
                 return response()->json([
-                    'message' => 'Sotib olish limiti oshib ketdi yoki noto‘g‘ri miqdor kiritildi!'
+                    'message' => 'Limit oshdi yoki miqdor noto‘g‘ri!'
                 ], 403);
             }
-
-            return response()->json(['payment_url' => $paymentUrl]);
-
+            return response()->json(['payment_url' => $url]);
         } catch (\Exception $e) {
-            Log::error("To‘lov yaratishda xatolik: " . $e->getMessage());
+            Log::error("Initiate xato: " . $e->getMessage());
             return response()->json([
-                'message' => 'To‘lovni yaratishda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'
+                'message' => 'Xatolik, keyinroq urinib ko‘ring.'
             ], 500);
         }
     }
@@ -42,31 +34,28 @@ class PaymentController extends Controller
     public function paymentCallback(Request $request)
     {
         try {
-            $paymentStatus    = $request->get('payment_status');
-            $paymentId        = $request->get('payment_id');
-    
-            if (!$paymentStatus || !$paymentId) {
-                Log::warning("Yetarli ma’lumot yo‘q", $request->all());
-                return response()->json(['message' => 'To‘lov ma’lumotlari yetarli emas!'], 400);
+            $status = $request->get('payment_status');
+            $id     = $request->get('payment_id');
+
+            if (!$status || !$id) {
+                Log::warning("Incomplete callback", $request->all());
+                return response()->json(['message' => 'Ma’lumot yetarli emas'], 400);
             }
-    
-            $request->merge([
-                'payment_status'    => $paymentStatus,
-                'transaction_param' => $paymentId, // Biz payment_id ni transaction_param o‘rniga qo‘llayapmiz
-            ]);
-    
-            $result = $this->clickService->processPayment($request);
-    
+
+            // ClickService.processPayment uchun parametr nomini moslaymiz
+            $request->merge(['transaction_param' => $id]);
+
+            $ok = $this->clickService->processPayment($request);
+
             return response()->json([
-                'message' => $result ? 'To‘lov muvaffaqiyatli amalga oshdi' : 'To‘lov amalga oshmadi!'
-            ], $result ? 200 : 400);
-    
+                'message' => $ok ? 'To‘lov muvaffaqiyatli' : 'To‘lov muvaffaqiyatsiz'
+            ], $ok ? 200 : 400);
+
         } catch (\Exception $e) {
-            Log::error("Callback xatosi: " . $e->getMessage());
+            Log::error("Callback xato: " . $e->getMessage());
             return response()->json([
-                'message' => 'To‘lovni qayta ishlashda xatolik yuz berdi.'
+                'message' => 'Callback ishlashda xato'
             ], 500);
         }
     }
-    
 }

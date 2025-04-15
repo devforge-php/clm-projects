@@ -8,20 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('payments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('transaction_id')->unique(); // Click tranzaksiya ID
-            $table->string('type'); // gold, silver, diamond
-            $table->integer('quantity'); // Nechta tanga
-            $table->decimal('amount', 10, 2); // To‘lov summasi
-            $table->enum('status', ['pending', 'paid', 'failed', 'cancelled', 'error'])->default('pending'); // STATUSLAR
-            $table->timestamps();
+        Schema::table('payments', function (Blueprint $table) {
+            // Avval mavjud transaction_id ustunini olib tashlaymiz
+            $table->dropColumn('transaction_id');
+
+            // Yangi ustun: Click’dan keladigan payment_id
+            $table->string('click_payment_id')->unique()->after('user_id');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('payments');
+        Schema::table('payments', function (Blueprint $table) {
+            // Aksincha qaytarish
+            $table->dropColumn('click_payment_id');
+            $table->string('transaction_id')->unique()->after('user_id');
+        });
     }
 };
