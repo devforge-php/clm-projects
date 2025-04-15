@@ -19,22 +19,19 @@ class ClickService
 
     public function __construct()
     {
-        $this->serviceId = env('CLICK_SERVICE_ID');
+        $this->serviceId  = env('CLICK_SERVICE_ID');
         $this->merchantId = env('CLICK_MERCHANT_ID');
-        $this->secretKey = env('CLICK_SECRET_KEY');
+        $this->secretKey  = env('CLICK_SECRET_KEY');
     }
 
     public function generatePaymentUrl($quantity)
     {
         try {
-            if ($quantity != 5) {
-                return false;
-            }
+            if ($quantity != 5) return false;
 
-            $user = auth()->user();
+            $user     = auth()->user();
             $cacheKey = "user_{$user->id}_last_purchase";
 
-            // Foydalanuvchi allaqachon to'lov qilgan bo'lsa, yangi URL yaratmaslik kerak
             if (Cache::has($cacheKey)) {
                 return Cache::get($cacheKey);
             }
@@ -44,37 +41,39 @@ class ClickService
                 ->where('created_at', '>=', $oneWeekAgo)
                 ->count();
 
-            // Agar foydalanuvchi 4 ta to'lovdan ko'p qilgan bo'lsa, yangi to'lov yaratmaslik kerak
-            if ($purchaseCount >= 4) {
-                return false;
-            }
+            if ($purchaseCount >= 4) return false;
 
             DB::beginTransaction();
+
             $amount = $quantity * 200;
             $transaction_id = Str::uuid();
 
-            // Yangi to'lov yaratish
             $payment = Payment::create([
-                'user_id' => $user->id,
-                'type' => 'gold',
-                'quantity' => $quantity,
-                'amount' => $amount,
+                'user_id'        => $user->id,
+                'type'           => 'gold',
+                'quantity'       => $quantity,
+                'amount'         => $amount,
                 'transaction_id' => $transaction_id,
-                'status' => 'pending'
+                'status'         => 'pending'
             ]);
 
             $returnUrl = route('payment.callback', [], true);
-            $paymentUrl = "https://my.click.uz/services/pay?service_id={$this->serviceId}&merchant_id={$this->merchantId}&amount={$amount}&transaction_param={$transaction_id}&return_url={$returnUrl}";
+            $paymentUrl = "https://my.click.uz/services/pay?" . http_build_query([
+                'service_id'        => $this->serviceId,
+                'merchant_id'       => $this->merchantId,
+                'amount'            => $amount,
+                'transaction_param' => $transaction_id,
+                'return_url'        => $returnUrl,
+            ]);
 
-            // URLni Cache'ga saqlash
-            Cache::put($cacheKey, $paymentUrl, 86400); // 24 soat davomida saqlash
+            Cache::put($cacheKey, $paymentUrl, 86400); // 24 soat
 
             DB::commit();
             return $paymentUrl;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Payment yaratishda xatolik: " . $e->getMessage());
+            Log::error("To‘lov URL yaratishda xatolik: " . $e->getMessage());
             return false;
         }
     }
@@ -82,41 +81,30 @@ class ClickService
     public function processPayment($request)
     {
         try {
-            // Signature tekshirish
-            if (!$this->verifySignature($request)) {
-                Log::warning("Invalid Click signature", $request->all());
-                return false;
-            }
-
-            // To'lovni topish
-            $payment = Payment::where('transaction_id', $request->transaction_param)
-                              ->where('amount', $request->amount)
-                              ->first();
-
+            $payment = Payment::where('transaction_id', $request->transaction_param)->first();
+    
             if (!$payment) {
-                Log::error("Payment not found: " . $request->transaction_param);
+                Log::error("To‘lov topilmadi: " . $request->transaction_param);
                 return false;
             }
-
-            // To'lov holatini qayta ishlash
-            $status = $request->input('payment_status') === '2' ? 'success' : 'failed';
+    
+            $status = $request->payment_status === '2' ? 'success' : 'failed';
             return $this->handlePaymentStatus($payment, $status);
-
+    
         } catch (\Exception $e) {
             Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
             return false;
         }
     }
+    
 
     private function handlePaymentStatus($payment, $status)
     {
         DB::beginTransaction();
         try {
-            if ($status === "success") {
-                if ($payment->status !== 'paid') {
-                    $payment->update(['status' => 'paid']);
-                    $this->addGoldToUser($payment);
-                }
+            if ($status === "success" && $payment->status !== 'paid') {
+                $payment->update(['status' => 'paid']);
+                $this->addGoldToUser($payment);
             } else {
                 $payment->update(['status' => 'failed']);
             }
@@ -126,7 +114,7 @@ class ClickService
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
+            Log::error("Holatni yangilashda xatolik: " . $e->getMessage());
             return false;
         }
     }
@@ -134,12 +122,12 @@ class ClickService
     private function addGoldToUser($payment)
     {
         $user = User::find($payment->user_id);
+
         if ($user) {
             $profile = Profile::firstOrCreate(['user_id' => $user->id]);
-            $profile->gold += $payment->quantity;
-            $profile->save();
+            $profile->increment('gold', $payment->quantity);
         } else {
-            Log::error("User not found for payment: " . $payment->id);
+            Log::error("Foydalanuvchi topilmadi (payment_id: {$payment->id})");
         }
     }
 
@@ -151,8 +139,7 @@ class ClickService
             $request->amount .
             $this->secretKey
         );
-        Log::info("Generated Signature: " . $generatedSignature);
-        Log::info("Received Signature: " . $request->sign_string);
+
         return $generatedSignature === $request->sign_string;
     }
 }

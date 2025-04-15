@@ -18,65 +18,55 @@ class PaymentController extends Controller
 
     public function initiatePayment(Request $request)
     {
-        $quantity = $request->input('quantity', 5); // Default 5 tanga
+        $quantity = $request->input('quantity', 5); // Default qiymat: 5 tanga
 
         try {
             $paymentUrl = $this->clickService->generatePaymentUrl($quantity);
 
             if (!$paymentUrl) {
-                return response()->json(['message' => 'Sotib olish limiti oshib ketdi yoki noto‘g‘ri miqdor kiritildi!'], 403);
+                return response()->json([
+                    'message' => 'Sotib olish limiti oshib ketdi yoki noto‘g‘ri miqdor kiritildi!'
+                ], 403);
             }
 
             return response()->json(['payment_url' => $paymentUrl]);
 
         } catch (\Exception $e) {
             Log::error("To‘lov yaratishda xatolik: " . $e->getMessage());
-            return response()->json(['message' => 'To‘lovni yaratishda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'], 500);
+            return response()->json([
+                'message' => 'To‘lovni yaratishda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'
+            ], 500);
         }
     }
 
     public function paymentCallback(Request $request)
     {
         try {
-            // So'rov turini tekshirish va parametrlarni olish
-            if ($request->method() === 'GET') {
-                $paymentStatus = $request->query('payment_status');
-                $transactionParam = $request->query('transaction_param', $request->query('payment_id'));
-                $amount = $request->query('amount');
-                $signString = $request->query('sign_string');
-            } else {
-                $paymentStatus = $request->input('payment_status');
-                $transactionParam = $request->input('transaction_param', $request->input('payment_id'));
-                $amount = $request->input('amount');
-                $signString = $request->input('sign_string');
-            }
+            $paymentStatus    = $request->get('payment_status');
+            $paymentId        = $request->get('payment_id');
     
-            // Kerakli parametrlar mavjudligini tekshirish
-            if (!$paymentStatus || !$transactionParam || !$amount || !$signString) {
-                Log::warning("Callback received incomplete data", $request->all());
+            if (!$paymentStatus || !$paymentId) {
+                Log::warning("Yetarli ma’lumot yo‘q", $request->all());
                 return response()->json(['message' => 'To‘lov ma’lumotlari yetarli emas!'], 400);
             }
     
-            // Parametrlarni request obyektiga qo'shish
             $request->merge([
-                'payment_status' => $paymentStatus,
-                'transaction_param' => $transactionParam,
-                'amount' => $amount,
-                'sign_string' => $signString,
+                'payment_status'    => $paymentStatus,
+                'transaction_param' => $paymentId, // Biz payment_id ni transaction_param o‘rniga qo‘llayapmiz
             ]);
     
-            // To'lovni qayta ishlash
             $result = $this->clickService->processPayment($request);
     
-            if ($result) {
-                return response()->json(['message' => 'To‘lov muvaffaqiyatli amalga oshdi']);
-            }
-    
-            return response()->json(['message' => 'To‘lov amalga oshmadi!'], 400);
+            return response()->json([
+                'message' => $result ? 'To‘lov muvaffaqiyatli amalga oshdi' : 'To‘lov amalga oshmadi!'
+            ], $result ? 200 : 400);
     
         } catch (\Exception $e) {
-            Log::error("To‘lovni qayta ishlashda xatolik: " . $e->getMessage());
-            return response()->json(['message' => 'To‘lovni qayta ishlashda xatolik yuz berdi, iltimos keyinroq urinib ko‘ring.'], 500);
+            Log::error("Callback xatosi: " . $e->getMessage());
+            return response()->json([
+                'message' => 'To‘lovni qayta ishlashda xatolik yuz berdi.'
+            ], 500);
         }
     }
+    
 }
