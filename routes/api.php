@@ -42,9 +42,9 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 });
 // Referral End
 
-Route::middleware(['auth:sanctum','throttle:60,1'])
-    ->post('/payment/initiate', [PaymentController::class,'initiatePayment']);
-
+Route::middleware(['auth:sanctum', 'throttle:100,1'])
+    ->post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
+    
 Route::match(['get','post'],'/payment/callback',[PaymentController::class,'paymentCallback'])
     ->name('payment.callback');
 
