@@ -12,12 +12,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
 
-            // Click’dan keladigan payment_id
-            $table->string('click_payment_id')->unique();
+            $table->uuid('transaction_id')->unique();
+            $table->string('external_payment_id')->nullable()->unique();
 
-            $table->string('type');     // gold, silver, diamond
-            $table->integer('quantity'); // Nechta tanga
-            $table->decimal('amount', 10, 2); // To‘lov summasi
+            $table->string('type');
+            $table->integer('quantity');
+            $table->decimal('amount', 10, 2);
 
             $table->enum('status', ['pending', 'paid', 'failed', 'cancelled', 'error'])
                   ->default('pending');

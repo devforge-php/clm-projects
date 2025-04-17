@@ -13,48 +13,60 @@ class PaymentController extends Controller
 
     public function initiatePayment(Request $request)
     {
-        $quantity = $request->input('quantity', 5);
+        // Input validation: only allow integer quantity = 5
+        $request->validate([
+            'quantity' => ['required', 'integer', 'in:5'],
+        ]);
+
+        $quantity = $request->input('quantity');
 
         try {
             $url = $this->clickService->generatePaymentUrl($quantity);
+
             if (!$url) {
                 return response()->json([
-                    'message' => 'Limit oshdi yoki miqdor noto‘g‘ri!'
+                    'message' => 'Limit oshgan yoki noto‘g‘ri miqdor kiritildi.'
                 ], 403);
             }
+
             return response()->json(['payment_url' => $url]);
-        } catch (\Exception $e) {
-            Log::error("Initiate xato: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error("To‘lov boshlanishida xato: " . $e->getMessage());
             return response()->json([
-                'message' => 'Xatolik, keyinroq urinib ko‘ring.'
+                'message' => 'Xatolik yuz berdi. Iltimos, keyinroq urinib ko‘ring.'
             ], 500);
         }
     }
 
     public function paymentCallback(Request $request)
     {
+        // Validate required callback parameters and their formats
+        $request->validate([
+            'transaction_param' => ['required', 'uuid'],
+            'payment_status'    => ['required', 'in:1,2'],
+            // assuming signature field name 'sign_string'
+            'sign_string'       => ['required', 'string'],
+        ]);
+
+        $transactionId = $request->get('transaction_param');
+        $statusCode    = $request->get('payment_status');
+
+        // Verify signature for security
+        if (! $this->clickService->verifySignature($request->all())) {
+            Log::warning('Click callback signature mismatch', $request->all());
+            return response()->json(['message' => 'Unauthorized callback'], 403);
+        }
+
         try {
-            $status = $request->get('payment_status');
-            $id     = $request->get('payment_id');
-
-            if (!$status || !$id) {
-                Log::warning("Incomplete callback", $request->all());
-                return response()->json(['message' => 'Ma’lumot yetarli emas'], 400);
-            }
-
-            // ClickService.processPayment uchun parametr nomini moslaymiz
-            $request->merge(['transaction_param' => $id]);
-
             $ok = $this->clickService->processPayment($request);
 
             return response()->json([
-                'message' => $ok ? 'To‘lov muvaffaqiyatli' : 'To‘lov muvaffaqiyatsiz'
+                'message' => $ok ? 'To‘lov muvaffaqiyatli amalga oshirildi.' : 'To‘lov amalga oshmadi.'
             ], $ok ? 200 : 400);
-
-        } catch (\Exception $e) {
-            Log::error("Callback xato: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error("Callback jarayonida xato: " . $e->getMessage());
             return response()->json([
-                'message' => 'Callback ishlashda xato'
+                'message' => 'To‘lovni qayta ishlashda xato yuz berdi.'
             ], 500);
         }
     }

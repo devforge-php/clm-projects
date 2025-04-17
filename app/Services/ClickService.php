@@ -13,9 +13,9 @@ use Carbon\Carbon;
 
 class ClickService
 {
-    private $serviceId;
-    private $merchantId;
-    private $secretKey;
+    private string $serviceId;
+    private string $merchantId;
+    private string $secretKey;
 
     public function __construct()
     {
@@ -24,9 +24,10 @@ class ClickService
         $this->secretKey  = env('CLICK_SECRET_KEY');
     }
 
-    public function generatePaymentUrl($quantity)
+    public function generatePaymentUrl(int $quantity): string|false
     {
-        if ($quantity != 5) {
+        // Business logic validation: only allow fixed quantity
+        if ($quantity !== 5) {
             return false;
         }
 
@@ -37,10 +38,10 @@ class ClickService
             return Cache::get($cacheKey);
         }
 
-        $oneWeekAgo = Carbon::now()->subDays(7);
-        $count = Payment::where('user_id', $user->id)
-            ->where('created_at', '>=', $oneWeekAgo)
-            ->count();
+        $weekAgo = Carbon::now()->subDays(7);
+        $count   = Payment::where('user_id', $user->id)
+                         ->where('created_at', '>=', $weekAgo)
+                         ->count();
 
         if ($count >= 4) {
             return false;
@@ -48,76 +49,87 @@ class ClickService
 
         DB::beginTransaction();
         try {
-            $amount = $quantity * 200;
-            // Biz yaratamiz: Click ga yuboriladigan payment_id
-            $clickPaymentId = Str::uuid();
+            $amount        = $quantity * 200;
+            $transactionId = (string) Str::uuid();
 
-            $payment = Payment::create([
-                'user_id'          => $user->id,
-                'type'             => 'gold',
-                'quantity'         => $quantity,
-                'amount'           => $amount,
-                'click_payment_id' => $clickPaymentId,
-                'status'           => 'pending',
+            Payment::create([
+                'user_id'        => $user->id,
+                'type'           => 'gold',
+                'quantity'       => $quantity,
+                'amount'         => $amount,
+                'transaction_id' => $transactionId,
+                'status'         => 'pending',
             ]);
 
-            $returnUrl = route('payment.callback', [], true);
-            $paymentUrl = "https://my.click.uz/services/pay?" . http_build_query([
+            $callbackUrl = route('payment.callback', [], true);
+            $returnUrl   = 'https://clmgo.org';
+
+            $paymentUrl = 'https://my.click.uz/services/pay?' . http_build_query([
                 'service_id'        => $this->serviceId,
                 'merchant_id'       => $this->merchantId,
                 'amount'            => $amount,
-                'transaction_param' => $clickPaymentId, 
+                'transaction_param' => $transactionId,
+                'callback_url'      => $callbackUrl,
                 'return_url'        => $returnUrl,
             ]);
 
-            Cache::put($cacheKey, $paymentUrl, 86400);
+            Cache::put($cacheKey, $paymentUrl, now()->addDay());
             DB::commit();
-            return $paymentUrl;
 
-        } catch (\Exception $e) {
+            return $paymentUrl;
+        } catch (\Throwable $e) {
             DB::rollBack();
             Log::error("To‘lov URL yaratishda xato: " . $e->getMessage());
             return false;
         }
     }
 
-    public function processPayment($request)
+    public function processPayment($request): bool
     {
         try {
-            $clickPaymentId = $request->get('transaction_param');
-            $payment = Payment::where('click_payment_id', $clickPaymentId)->first();
+            $transactionId = $request->get('transaction_param');
+            $payment       = Payment::where('transaction_id', $transactionId)->first();
 
-            if (!$payment) {
-                Log::error("Payment topilmadi: {$clickPaymentId}");
+            if (! $payment) {
+                Log::error("To‘lov topilmadi: {$transactionId}");
                 return false;
             }
 
-            $status = $request->get('payment_status') === '2' ? 'success' : 'failed';
-            return $this->handlePaymentStatus($payment, $status);
+            $paymentId = $request->get('payment_id');
+            $status    = $request->get('payment_status') === '2' ? 'paid' : 'failed';
 
-        } catch (\Exception $e) {
-            Log::error("To‘lovni qayta ishlash xato: " . $e->getMessage());
+            $payment->external_payment_id = $paymentId;
+            $payment->status              = $status;
+            $payment->save();
+
+            if ($status === 'paid') {
+                $this->addGoldToUser($payment);
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error("To‘lovni qayta ishlashda xato: " . $e->getMessage());
             return false;
         }
     }
 
-    private function handlePaymentStatus(Payment $payment, string $status): bool
+    public function verifySignature(array $data): bool
     {
-        DB::beginTransaction();
-        try {
-            if ($status === 'success' && $payment->status !== 'paid') {
-                $payment->update(['status' => 'paid']);
-                $this->addGoldToUser($payment);
-            } else {
-                $payment->update(['status' => 'failed']);
-            }
-            DB::commit();
-            return $status === 'success';
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Holat yangilash xato: " . $e->getMessage());
+        // Ensure required fields for signature
+        if (empty($data['merchant_id']) || empty($data['service_id']) || empty($data['transaction_param']) || empty($data['amount']) || empty($data['sign_time']) || empty($data['sign_string'])) {
             return false;
         }
+
+        // Build signature string according to Click API spec
+        $payload = $data['merchant_id']
+                 . $data['service_id']
+                 . $data['transaction_param']
+                 . $data['amount']
+                 . $data['sign_time']
+                 . $this->secretKey;
+
+        $calculated = hash('sha256', $payload);
+        return hash_equals($calculated, $data['sign_string']);
     }
 
     private function addGoldToUser(Payment $payment): void
@@ -127,7 +139,7 @@ class ClickService
             $profile = Profile::firstOrCreate(['user_id' => $user->id]);
             $profile->increment('gold', $payment->quantity);
         } else {
-            Log::error("Foydalanuvchi topilmadi (ID: {$payment->id})");
+            Log::error("Foydalanuvchi topilmadi (ID: {$payment->user_id})");
         }
     }
 }
