@@ -55,9 +55,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Referral::class, 'user_id', 'id');
     }
-   public function Transactions()
+   public function Payments()
    {
-    return $this->hasMany(Transaction::class);
+    return $this->hasMany(Payment::class);
    }
     
 }
