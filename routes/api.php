@@ -47,8 +47,10 @@ Route::middleware(['auth:sanctum', 'throttle:78,1'])->group(function () {
 
     // Payment initiation
     Route::post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
-});
-
-Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])
+    Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])
     ->middleware('throttle:78,1')
     ->name('payment.callback');
+
+});
+
+

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Click;
 use App\Http\Controllers\Controller;
 use App\Services\ClickService;
 use Illuminate\Http\Request;
-use App\Models\Payment;
 
 class PaymentController extends Controller
 {
@@ -26,13 +25,19 @@ class PaymentController extends Controller
     // CLICK callback backendga yuboradi
     public function paymentCallback(Request $request)
     {
+        // Validatsiya: Ma'lumotlarni tekshiramiz
         $request->validate([
-            'payment_status' => ['required', 'in:1,2'], // 2 = success
-            'payment_id'     => ['required', 'string'], // transaction_param
+            'user_id'       => ['required', 'exists:users,id'], // Foydalanuvchi mavjudligini tekshiramiz
+            'payment_id'    => ['required', 'string'],          // Transaction ID
+            'payment_status'=> ['required', 'in:1,2'],         // To'lov holati
         ]);
 
-        // Handle payment callback logic
-        $success = $this->clickService->processCallback($request->payment_status, $request->payment_id);
+        // Callbackni qayta ishlash
+        $success = $this->clickService->processCallback(
+            $request->payment_status,
+            $request->payment_id,
+            $request->user_id
+        );
 
         return response()->json([
             'message' => $success ? 'Payment successful.' : 'Payment failed.'

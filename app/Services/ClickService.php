@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Profile;
-use App\Models\Payment;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ClickService
 {
@@ -22,7 +21,7 @@ class ClickService
     public function generatePaymentUrl($user, int $quantity = 1): string
     {
         $amount = 200 * $quantity;
-        $transactionId = (string) Str::uuid();
+        $transactionId = uniqid(); // Unique transaction ID
         $signTime = time();
 
         $signature = hash('sha256', $this->merchantId . $transactionId . $amount . $signTime . $this->secretKey);
@@ -41,24 +40,48 @@ class ClickService
         return 'https://my.click.uz/services/pay?' . http_build_query($params);
     }
 
-    public function processCallback(string $status, string $paymentId): bool
+    public function processCallback(string $status, string $paymentId, int $userId): bool
     {
-        if ($status !== '2') return false;
+        // 1. Cache orqali qayta callback ni oldini olish
+        $cacheKeyUser = "user_payment_{$userId}";
+        $cacheKeyPayment = "payment_id_{$paymentId}";
 
-        // Find payment by transaction_id (payment_id)
-        $payment = Payment::where('transaction_param', $paymentId)->first();
-
-        if (!$payment) {
-            // Handle invalid payment ID if not found
+        if (Cache::has($cacheKeyUser) || Cache::has($cacheKeyPayment)) {
+            // Agar allaqachon to'lov qilingan bo'lsa, rad etamiz
             return false;
         }
 
-        // Mark the payment as successful
-        $payment->markAsPaid();
+        // 2. Agar to'lov muvaffaqiyatli bo'lmagan bo'lsa
+        if ($status !== '2') {
+            return false;
+        }
 
-        // Update user profile, adding gold
-        $profile = Profile::firstOrCreate(['user_id' => $payment->user_id]);
-        $profile->increment('gold', 2); // Example: Add 2 coins for successful payment
+        // 3. Cache-ga user_id va payment_id ni saqlash (48 soat)
+        Cache::put($cacheKeyUser, true, now()->addHours(48));
+        Cache::put($cacheKeyPayment, true, now()->addHours(48));
+
+        // 4. User profile ni topamiz yoki yangi profile yaratamiz
+        $profile = DB::table('profiles')->where('user_id', $userId)->first();
+
+        if (!$profile) {
+            // Agar profile yo'q bo'lsa, yangi profile yaratamiz
+            DB::table('profiles')->insert([
+                'user_id' => $userId,
+                'gold'    => 5, // Boshlang'ich gold miqdori
+                'level'   => 5, // Boshlang'ich level
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            // Agar profile mavjud bo'lsa, gold va level ni yangilaymiz
+            DB::table('profiles')
+                ->where('user_id', $userId)
+                ->update([
+                    'gold'  => DB::raw('gold + 5'), // Gold ni 5 ga oshiramiz
+                    'level' => DB::raw('level * 5'), // Level ni 5 ga ko'paytiramiz
+                    'updated_at' => now(),
+                ]);
+        }
 
         return true;
     }
