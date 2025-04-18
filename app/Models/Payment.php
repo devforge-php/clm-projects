@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,16 +10,21 @@ class Payment extends Model
 
     protected $fillable = [
         'user_id',
-        'type',
         'quantity',
         'amount',
-        'transaction_id',
-        'external_payment_id',
         'status',
+        'transaction_param',  // Include transaction_param
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // Method to mark payment as paid
+    public function markAsPaid()
+    {
+        $this->status = 'paid';
+        $this->save();
     }
 }
