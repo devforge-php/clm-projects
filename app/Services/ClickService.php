@@ -23,23 +23,23 @@ class ClickService
         $amount = 200 * $quantity;
         $transactionId = uniqid(); // Unique transaction ID
         $signTime = time();
-
+    
         $signature = hash('sha256', $this->merchantId . $transactionId . $amount . $signTime . $this->secretKey);
-
+    
         $params = [
             'service_id'        => $this->serviceId,
             'merchant_id'       => $this->merchantId,
             'amount'            => $amount,
             'transaction_param' => $transactionId,
             'callback_url'      => route('payment.callback', [], true),
-            'return_url'        => 'https://clmgo.org?status=success&payment_id=' . $transactionId,
+            'return_url'        => 'https://clmgo.org/paymentResult?status=success&payment_id=' . $transactionId,
             'sign_time'         => $signTime,
             'sign_string'       => $signature,
         ];
-
+    
         return 'https://my.click.uz/services/pay?' . http_build_query($params);
     }
-
+    
     public function processCallback(string $status, string $paymentId, int $userId): bool
     {
         // 1. Cache orqali qayta callback ni oldini olish
