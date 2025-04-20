@@ -23,8 +23,8 @@ class SendPodcastNotification
         if (
             $profile
             && $profile->tasks     == 1
-            && $profile->refferals == 1
-            && $profile->level     == 1
+            && $profile->refferals == 2
+            && $profile->level     == 3
         ) {
             // Telegram bot token va chat ID’lar
             $botToken = '7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA';

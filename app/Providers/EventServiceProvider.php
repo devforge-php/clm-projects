@@ -36,8 +36,9 @@ class EventServiceProvider extends ServiceProvider
     //     'App\Listeners\UpdateProfileLevel',
     // ],
     TelegramAdmin::class => [
-        SendPodcastNotification::class,
+      
         TelegramListener::class,
+        SendPodcastNotification::class,
     ],
     ];
 
