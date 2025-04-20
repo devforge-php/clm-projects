@@ -22,9 +22,9 @@ class SendPodcastNotification
         // Agar profil topilsa va barcha shartlar bajarilgan bo‘lsa
         if (
             $profile
-            && $profile->tasks     == 1
-            && $profile->refferals == 2
-            && $profile->level     == 3
+            && $profile->tasks     == 28
+            && $profile->refferals == 40
+            && $profile->level     == 130
         ) {
             // Telegram bot token va chat ID’lar
             $botToken = '7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA';
