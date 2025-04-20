@@ -32,7 +32,7 @@ class ClickService
             'amount'            => $amount,
             'transaction_param' => $transactionId,
             'callback_url'      => route('payment.callback', [], true),
-            'return_url'        => 'https://clmgo.org/paymentResult?status=success&payment_id=' . $transactionId,
+            'return_url'        => 'https://clmgo.org/paymentResult',
             'sign_time'         => $signTime,
             'sign_string'       => $signature,
         ];
