@@ -9,6 +9,7 @@ use App\Events\ReferralEvent;
 use App\Events\TelegramAdmin;
 use App\Listeners\ProfileListener;
 use App\Listeners\ReferralListener;
+use App\Listeners\SendPodcastNotification;
 use App\Listeners\TelegramListener;
 use App\Listeners\UpdateProfileLevel;
 use App\Listeners\UsersRegister;
@@ -35,6 +36,7 @@ class EventServiceProvider extends ServiceProvider
     //     'App\Listeners\UpdateProfileLevel',
     // ],
     TelegramAdmin::class => [
+        SendPodcastNotification::class,
         TelegramListener::class,
     ],
     ];
