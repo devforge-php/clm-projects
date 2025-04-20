@@ -41,6 +41,6 @@ class ProcessUserRegistration implements ShouldQueue
        
         ProfileEvent::dispatch($user);
         ReferralEvent::dispatch($user);
-        TelegramAdmin::dispatch($user);
+        event(new TelegramAdmin($user));
     }
 }
