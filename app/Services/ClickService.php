@@ -20,7 +20,7 @@ class ClickService
 
     public function generatePaymentUrl($user, int $quantity = 1): string
     {
-        $amount = 200 * $quantity;
+        $amount = 1600 * $quantity; // 1 tanga = 1600 so‘m
         $transactionId = uniqid(); // Unique transaction ID
         $signTime = time();
     
@@ -39,6 +39,7 @@ class ClickService
     
         return 'https://my.click.uz/services/pay?' . http_build_query($params);
     }
+    
     
     public function processCallback(string $status, string $paymentId, int $userId): bool
     {
