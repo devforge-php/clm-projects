@@ -29,7 +29,7 @@ class SocialMediaServices
                 ->where('social_user_names.user_id', $userId)
                 ->get();
 
-            return SocialMediaResource::collection($results);
+            return SocialMediaResource::collection($results);  // To'g'ri ishlov berish
         });
     }
 

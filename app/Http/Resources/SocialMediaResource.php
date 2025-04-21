@@ -17,8 +17,8 @@ class SocialMediaResource extends JsonResource
         return [
             'id' => $this->id,
             'user' => [
-                'first_name' => $this->user->firstname,
-                'last_name' => $this->user->lastname,
+                'first_name' => $this->firstname,  // `firstname` maydoni endi bevosita mavjud
+                'last_name' => $this->lastname,    // `lastname` maydoni ham
             ],
             'telegram' => $this->telegram_user_name,
             'instagram' => $this->instagram_user_name,
