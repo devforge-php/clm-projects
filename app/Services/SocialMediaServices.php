@@ -2,80 +2,47 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use App\Http\Resources\SocialMediaResource;
+use App\Models\SocialUserName;
+use Illuminate\Support\Facades\Cache;
 
-class SocialMediaServices
+class SocialMediaServices   
 {
     public function getAllSocialUsers()
     {
-        $userId = auth()->id();
-
-        return Cache::remember("social_user_names_user_{$userId}", 600, function () use ($userId) {
-            $results = DB::table('social_user_names')
-                ->join('users', 'users.id', '=', 'social_user_names.user_id')
-                ->select(
-                    'social_user_names.id',
-                    'social_user_names.user_id',
-                    'social_user_names.telegram_user_name',
-                    'social_user_names.instagram_user_name',
-                    'social_user_names.facebook_user_name',
-                    'social_user_names.youtube_user_name',
-                    'social_user_names.twitter_user_name',
-                    'users.firstname',
-                    'users.lastname'
-                )
-                ->where('social_user_names.user_id', $userId)
-                ->get();
-
-            return SocialMediaResource::collection($results);  // To'g'ri ishlov berish
-        });
+        return SocialMediaResource::collection(
+            SocialUserName::with(['user:id,firstname,lastname'])
+                ->where('user_id', auth()->id()) // Faqat hozirgi foydalanuvchini olish
+                ->select(['id', 'user_id', 'telegram_user_name', 'instagram_user_name', 'facebook_user_name', 'youtube_user_name', 'twitter_user_name'])
+                ->get()
+        );
     }
+    
+    
 
     public function createSocialUser(array $data, $userId)
     {
-        $exists = DB::table('social_user_names')->where('user_id', $userId)->exists();
+        // Foydalanuvchi uchun yozuv bor-yo‘qligini tekshiramiz
+        $existingSocialUser = SocialUserName::where('user_id', $userId)->first();
 
-        if ($exists) {
-            return null; // allaqachon mavjud
+        if ($existingSocialUser) {
+            return null; // Conflict holati
         }
 
-        $data['user_id'] = $userId;
-        $id = DB::table('social_user_names')->insertGetId($data);
+        $socialUser = SocialUserName::create(array_merge($data, [
+            'user_id' => $userId,
+        ]));
 
-        Cache::forget("social_user_names_user_{$userId}");
-
-        $newData = DB::table('social_user_names')
-            ->join('users', 'users.id', '=', 'social_user_names.user_id')
-            ->select(
-                'social_user_names.*',
-                'users.firstname',
-                'users.lastname'
-            )
-            ->where('social_user_names.id', $id)
-            ->first();
-
-        return new SocialMediaResource($newData);
+        Cache::forget('social_user_names');
+        return new SocialMediaResource($socialUser);
     }
 
     public function updateSocialUser(string $id, array $data)
     {
-        $userId = auth()->id();
-
-        $exists = DB::table('social_user_names')
-            ->where('id', $id)
-            ->where('user_id', $userId)
-            ->exists();
-
-        if (!$exists) {
-            return false; // boshqa user yozuvini o‘zgartirishga urinish
-        }
-
-        DB::table('social_user_names')->where('id', $id)->update($data);
-
-        Cache::forget("social_user_names_user_{$userId}");
-
-        return true;
+        $socialUser = SocialUserName::findOrFail($id);
+        $socialUser->update($data);
+        
+        Cache::forget('social_user_names');
+        return $socialUser;
     }
 }

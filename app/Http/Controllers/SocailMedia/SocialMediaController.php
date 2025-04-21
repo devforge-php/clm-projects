@@ -4,8 +4,10 @@ namespace App\Http\Controllers\SocailMedia;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SocialMediaResource;
+use App\Models\SocialUserName;
 use App\Services\SocialMediaServices;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class SocialMediaController extends Controller
 {
@@ -18,7 +20,7 @@ class SocialMediaController extends Controller
 
     public function index()
     {
-        return response()->json($this->socialMediaService->getAllSocialUsers());
+        return $this->socialMediaService->getAllSocialUsers();
     }
 
     public function store(Request $request)
@@ -39,7 +41,7 @@ class SocialMediaController extends Controller
             ], 409);
         }
 
-        return response()->json($socialUser);
+        return $socialUser;
     }
 
     public function update(Request $request, string $id)
@@ -52,11 +54,7 @@ class SocialMediaController extends Controller
             'twitter_user_name' => 'string|nullable',
         ]);
 
-        $updated = $this->socialMediaService->updateSocialUser($id, $validatedData);
-
-        if (!$updated) {
-            return response()->json(['message' => 'Ruxsat yo‘q yoki maʼlumot topilmadi.'], 403);
-        }
+        $this->socialMediaService->updateSocialUser($id, $validatedData);
 
         return response()->json(['message' => 'Updated successfully']);
     }
