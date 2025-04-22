@@ -1,48 +1,45 @@
 <?php
 
+// app/Services/SocialMediaService.php
 namespace App\Services;
 
-use App\Http\Resources\SocialMediaResource;
 use App\Models\SocialUserName;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Collection;
 
-class SocialMediaServices   
+class SocialMediaServices
 {
-    public function getAllSocialUsers()
+    // Cache TTL in minutes
+    private const TTL = 10;
+
+    public function getAllForUser(int $userId): Collection
     {
-        return SocialMediaResource::collection(
-            SocialUserName::with(['user:id,firstname,lastname'])
-                ->where('user_id', auth()->id()) // Faqat hozirgi foydalanuvchini olish
-                ->select(['id', 'user_id', 'telegram_user_name', 'instagram_user_name', 'facebook_user_name', 'youtube_user_name', 'twitter_user_name'])
-                ->get()
-        );
+        return Cache::remember("social_media_user_{$userId}", self::TTL * 60, function () use ($userId) {
+            return SocialUserName::where('user_id', $userId)
+                ->select('id', 'user_id', 'telegram_user_name', 'instagram_user_name', 'facebook_user_name', 'youtube_user_name', 'twitter_user_name')
+                ->get();
+        });
     }
-    
-    
 
-    public function createSocialUser(array $data, $userId)
+    public function createForUser(int $userId, array $data): ?SocialUserName
     {
-        // Foydalanuvchi uchun yozuv bor-yo‘qligini tekshiramiz
-        $existingSocialUser = SocialUserName::where('user_id', $userId)->first();
-
-        if ($existingSocialUser) {
-            return null; // Conflict holati
+        if (SocialUserName::where('user_id', $userId)->exists()) {
+            return null;
         }
 
-        $socialUser = SocialUserName::create(array_merge($data, [
-            'user_id' => $userId,
-        ]));
+        $model = SocialUserName::create(['user_id' => $userId] + $data);
+        Cache::forget("social_media_user_{$userId}");
 
-        Cache::forget('social_user_names');
-        return new SocialMediaResource($socialUser);
+        return $model;
     }
 
-    public function updateSocialUser(string $id, array $data)
+    public function updateForUser(SocialUserName $model, array $data): SocialUserName
     {
-        $socialUser = SocialUserName::findOrFail($id);
-        $socialUser->update($data);
-        
-        Cache::forget('social_user_names');
-        return $socialUser;
+        $model->fill($data);
+        if ($model->isDirty()) {
+            $model->save();
+            Cache::forget("social_media_user_{$model->user_id}");
+        }
+        return $model;
     }
 }

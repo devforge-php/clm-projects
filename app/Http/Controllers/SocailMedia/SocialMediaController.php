@@ -1,61 +1,47 @@
 <?php
 
+// app/Http/Controllers/SocailMedia/SocialMediaController.php
 namespace App\Http\Controllers\SocailMedia;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SocialMediaStoreRequest;
+use App\Http\Requests\SocialMediaUpdateRequest;
 use App\Http\Resources\SocialMediaResource;
 use App\Models\SocialUserName;
 use App\Services\SocialMediaServices;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\JsonResponse;
 
 class SocialMediaController extends Controller
 {
-    protected $socialMediaService;
-
-    public function __construct(SocialMediaServices $socialMediaService)
+    public function __construct(private SocialMediaServices $service)
     {
-        $this->socialMediaService = $socialMediaService;
+        $this->middleware('throttle:60,1');
     }
 
-    public function index()
+    public function index(): JsonResponse
     {
-        return $this->socialMediaService->getAllSocialUsers();
+        $data = $this->service->getAllForUser(auth()->id());
+        return response()->json(SocialMediaResource::collection($data));
     }
 
-    public function store(Request $request)
+    public function store( $request): JsonResponse
     {
-        $validatedData = $request->validate([
-            'telegram_user_name' => 'string|nullable',
-            'instagram_user_name' => 'string|nullable',
-            'facebook_user_name' => 'string|nullable',
-            'youtube_user_name' => 'string|nullable',
-            'twitter_user_name' => 'string|nullable',
-        ]);
+        $dto = $request->validated();
+        $result = $this->service->createForUser(auth()->id(), $dto);
 
-        $socialUser = $this->socialMediaService->createSocialUser($validatedData, auth()->id());
-
-        if (!$socialUser) {
+        if (! $result) {
             return response()->json([
                 'message' => 'Siz allaqachon ijtimoiy tarmoqlar profilingizni kiritgansiz.'
             ], 409);
         }
 
-        return $socialUser;
+        return response()->json(new SocialMediaResource($result), 201);
     }
 
-    public function update(Request $request, string $id)
+    public function update(SocialMediaUpdateRequest $request, SocialUserName $socialUser): JsonResponse
     {
-        $validatedData = $request->validate([
-            'telegram_user_name' => 'string|nullable',
-            'instagram_user_name' => 'string|nullable',
-            'facebook_user_name' => 'string|nullable',
-            'youtube_user_name' => 'string|nullable',
-            'twitter_user_name' => 'string|nullable',
-        ]);
-
-        $this->socialMediaService->updateSocialUser($id, $validatedData);
-
-        return response()->json(['message' => 'Updated successfully']);
+        // Policy check e.g. $this->authorize('update', $socialUser);
+        $this->service->updateForUser($socialUser, $request->validated());
+        return response()->json(['message' => 'Yangilandi muvaffaqiyatli!']);
     }
 }
