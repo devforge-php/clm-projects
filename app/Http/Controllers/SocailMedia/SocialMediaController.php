@@ -51,14 +51,16 @@ class SocialMediaController extends Controller
     // Faqat o'z profilingizni yangilash
     public function update(SocialMediaUpdateRequest $request, SocialUserName $socialUser): JsonResponse
     {
-        // Foydalanuvchining IDsi bilan solishtirish
+        // Faqat o'z profilingizni yangilashga ruxsat beriladi
         if ($socialUser->user_id !== auth()->id()) {
             return response()->json(['message' => 'Siz faqat o\'z profilingizni yangilay olasiz.'], 403);
         }
-
-        // Yangilash metodini chaqirish
+    
+        // Yangilash metodini chaqiramiz
         $this->service->updateForUser($socialUser, $request->validated());
-
-        return response()->json(['message' => 'Profil muvaffaqiyatli yangilandi.']);
+    
+        // Yangilash muvaffaqiyatli bo'lsa
+        return response()->json(['message' => 'Yangilandi muvaffaqiyatli!']);
     }
+    
 }
