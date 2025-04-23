@@ -39,8 +39,19 @@ class SocialMediaController extends Controller
 
     public function update(SocialMediaUpdateRequest $request, SocialUserName $socialUser): JsonResponse
     {
-        // Policy check e.g. $this->authorize('update', $socialUser);
+        // Policy check (agar kerak bo'lsa): $this->authorize('update', $socialUser);
+    
+        // Yalpi o'zgarishlar faqat `user_id` asosida bo'ladi, shuning uchun
+        // faqat `user_id` orqali tekshirish kerak bo'ladi.
+        if ($socialUser->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Siz faqat o\'z profilingizni yangilay olasiz.'], 403);
+        }
+    
+        // Yangilash metodini chaqiramiz.
         $this->service->updateForUser($socialUser, $request->validated());
+    
+        // Natija qaytariladi
         return response()->json(['message' => 'Yangilandi muvaffaqiyatli!']);
     }
+    
 }
