@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Admin\SocialMediaUserNames\SocialUserNamesController;
 use App\Http\Controllers\Admin\Tasks\TaskController;
-use App\Http\Controllers\Admin\UserReset\UserResetController;
+use App\Http\Controllers\Admin\UserResetController;
 use App\Http\Controllers\Admin\Users\UserController;
 use Illuminate\Support\Facades\Route;
 

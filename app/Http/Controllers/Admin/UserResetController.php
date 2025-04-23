@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Admin\UserReset;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 
-class userResetController extends Controller
+class UserResetController extends Controller
 {
     public function resetAllUsers()
     {
