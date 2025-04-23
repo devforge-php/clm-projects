@@ -1,5 +1,4 @@
 <?php
-// routes/api.php
 
 use App\Http\Controllers\Admin\Tasks\TaskController;
 use App\Http\Controllers\Auth\AuthController;
@@ -17,15 +16,15 @@ Route::middleware(['throttle:78,1'])->group(function () {
     Route::post('login', [AuthController::class, 'login']);
 });
 
-// Protected routes under auth and DDoS throttle
+// Protected routes under auth:sanctum and DDoS throttle
 Route::middleware(['auth:sanctum', 'throttle:78,1'])->group(function () {
     // Auth actions
     Route::post('logout', [AuthController::class, 'logout']);
     Route::delete('delete-account', [AuthController::class, 'deleteAccount']);
 
-    // Profile
+    // Profile management
     Route::get('profile', [ProfileController::class, 'show']);
-    Route::post('profile', [ProfileController::class, 'updateprofile']);
+    Route::post('profile', [ProfileController::class, 'updateProfile']);
 
     // Social Media
     Route::get('socialMedia', [SocialMediaController::class, 'index']);
@@ -48,9 +47,7 @@ Route::middleware(['auth:sanctum', 'throttle:78,1'])->group(function () {
     // Payment initiation
     Route::post('/payment/initiate', [PaymentController::class, 'initiatePayment']);
     Route::post('/payment/callback', [PaymentController::class, 'paymentCallback'])
-    ->middleware('throttle:78,1')
-    ->name('payment.callback');
-
+        ->middleware('throttle:78,1')
+        ->name('payment.callback');
 });
-
 

@@ -7,21 +7,25 @@ use App\Http\Requests\SocialMediaStoreRequest;
 use App\Http\Requests\SocialMediaUpdateRequest;
 use App\Http\Resources\SocialMediaResource;
 use App\Models\SocialUserName;
-use App\Services\SocialMediaServices;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class SocialMediaController extends Controller
 {
-    public function __construct(private SocialMediaServices $service)
+    public function __construct()
     {
         $this->middleware('throttle:60,1');
     }
 
-    // Faonly o'zining profilingizni ko'rsatish
+    // Profilni olish
     public function index(): JsonResponse
     {
-        $data = $this->service->getAllForUser(auth()->id());
+        // Cache'dan o'qish
+        $data = Cache::remember('social_user_' . auth()->id(), now()->addMinutes(10), function () {
+            return SocialUserName::where('user_id', auth()->id())->get();
+        });
 
+        // Agar profil topilmasa, xatolik qaytariladi
         if ($data->isEmpty()) {
             return response()->json(['message' => 'Sizning profilingiz topilmadi.'], 404);
         }
@@ -34,39 +38,70 @@ class SocialMediaController extends Controller
     {
         $dto = $request->validated();
 
-        $result = $this->service->createForUser(auth()->id(), $dto);
-
-        if (!$result) {
+        // Agar foydalanuvchi allaqachon profil yaratgan bo'lsa, xatolik qaytariladi
+        $existingProfile = SocialUserName::where('user_id', auth()->id())->first();
+        if ($existingProfile) {
             return response()->json([
                 'message' => 'Siz allaqachon ijtimoiy tarmoqlar profilingizni kiritgansiz.'
             ], 409);
         }
 
-        return response()->json(new SocialMediaResource($result), 201);
+        // Profil yaratish
+        $socialUser = SocialUserName::create([
+            'user_id' => auth()->id(),
+            'telegram_user_name' => $dto['telegram_user_name'] ?? null,
+            'instagram_user_name' => $dto['instagram_user_name'] ?? null,
+            'facebook_user_name' => $dto['facebook_user_name'] ?? null,
+            'youtube_user_name' => $dto['youtube_user_name'] ?? null,
+            'twitter_user_name' => $dto['twitter_user_name'] ?? null,
+        ]);
+
+        // Cacheni yangilash
+        Cache::forget('social_user_' . auth()->id());
+
+        return response()->json(new SocialMediaResource($socialUser), 201);
     }
 
-    // Faqat o'z profilingizni yangilash
-    public function update(SocialMediaUpdateRequest $request, SocialUserName $socialUser): JsonResponse
+    // Profilni yangilash
+    public function update(SocialMediaUpdateRequest $request, $socialUserId): JsonResponse
     {
-        // Faqat o'z profilingizni yangilashga ruxsat beriladi
-        if ($socialUser->user_id !== auth()->id()) {
+        // Foydalanuvchining ID sini olish
+        $userId = auth()->id();
+
+        // So'rov yuborilgan socialUserId modelini tekshiramiz
+        $socialUser = SocialUserName::where('id', $socialUserId)->where('user_id', $userId)->first();
+
+        // Agar topilmasa xatolik qaytariladi
+        if (!$socialUser) {
             return response()->json(['message' => 'Siz faqat o\'z profilingizni yangilay olasiz.'], 403);
         }
 
-        $this->service->updateForUser($socialUser, $request->validated());
+        // Yangilash metodini chaqiramiz
+        $socialUser->update($request->validated());
+
+        // Cacheni yangilash
+        Cache::forget('social_user_' . auth()->id());
 
         return response()->json(['message' => 'Yangilandi muvaffaqiyatli!']);
     }
 
     // Profilni o'chirish
-    public function destroy(SocialUserName $socialUser): JsonResponse
+    public function destroy($socialUserId): JsonResponse
     {
-        // Faqat o'z profilingizni o'chirishga ruxsat beriladi
-        if ($socialUser->user_id !== auth()->id()) {
+        $userId = auth()->id();
+        
+        // So'rov yuborilgan socialUserId modelini tekshiramiz
+        $socialUser = SocialUserName::where('id', $socialUserId)->where('user_id', $userId)->first();
+
+        if (!$socialUser) {
             return response()->json(['message' => 'Siz faqat o\'z profilingizni o\'chira olasiz.'], 403);
         }
 
-        $this->service->deleteForUser($socialUser);
+        // Profilni o'chirish
+        $socialUser->delete();
+
+        // Cacheni yangilash
+        Cache::forget('social_user_' . auth()->id());
 
         return response()->json(['message' => 'Profil o\'chirildi.']);
     }
