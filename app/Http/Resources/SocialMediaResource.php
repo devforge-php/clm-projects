@@ -15,12 +15,13 @@ class SocialMediaResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'        => $this->id,
-            'telegram'  => $this->telegram_user_name,
-            'instagram' => $this->instagram_user_name,
-            'facebook'  => $this->facebook_user_name,
-            'youtube'   => $this->youtube_user_name,
-            'twitter'   => $this->twitter_user_name,
+            'id' => $this->id,
+            'user_id' => $this->user_id,
+            'telegram_user_name' => $this->telegram_user_name,
+            'instagram_user_name' => $this->instagram_user_name,
+            'facebook_user_name' => $this->facebook_user_name,
+            'youtube_user_name' => $this->youtube_user_name,
+            'twitter_user_name' => $this->twitter_user_name,
         ];
     }
 }
