@@ -17,15 +17,26 @@ class SocialMediaController extends Controller
         $this->middleware('throttle:60,1');
     }
 
+    // Faonly o'zining profilingizni ko'rsatish
     public function index(): JsonResponse
     {
+        // Authentifikatsiyalangan foydalanuvchining ijtimoiy tarmoq ma'lumotlarini olish
         $data = $this->service->getAllForUser(auth()->id());
+
+        // Agar profil topilmasa, xatolik qaytariladi
+        if ($data->isEmpty()) {
+            return response()->json(['message' => 'Sizning profilingiz topilmadi.'], 404);
+        }
+
         return response()->json(SocialMediaResource::collection($data));
     }
 
+    // Yangi profil yaratish
     public function store(SocialMediaStoreRequest $request): JsonResponse
     {
         $dto = $request->validated();
+
+        // Agar foydalanuvchi allaqachon profil yaratgan bo'lsa, xatolik qaytariladi
         $result = $this->service->createForUser(auth()->id(), $dto);
 
         if (! $result) {
@@ -37,21 +48,17 @@ class SocialMediaController extends Controller
         return response()->json(new SocialMediaResource($result), 201);
     }
 
+    // Faqat o'z profilingizni yangilash
     public function update(SocialMediaUpdateRequest $request, SocialUserName $socialUser): JsonResponse
     {
-        // Policy check (agar kerak bo'lsa): $this->authorize('update', $socialUser);
-    
-        // Yalpi o'zgarishlar faqat `user_id` asosida bo'ladi, shuning uchun
-        // faqat `user_id` orqali tekshirish kerak bo'ladi.
+        // Foydalanuvchining IDsi bilan solishtirish
         if ($socialUser->user_id !== auth()->id()) {
             return response()->json(['message' => 'Siz faqat o\'z profilingizni yangilay olasiz.'], 403);
         }
-    
-        // Yangilash metodini chaqiramiz.
+
+        // Yangilash metodini chaqirish
         $this->service->updateForUser($socialUser, $request->validated());
-    
-        // Natija qaytariladi
-        return response()->json(['message' => 'Yangilandi muvaffaqiyatli!']);
+
+        return response()->json(['message' => 'Profil muvaffaqiyatli yangilandi.']);
     }
-    
 }
