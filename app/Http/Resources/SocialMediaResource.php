@@ -16,7 +16,7 @@ class SocialMediaResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user' => $this->user->name,
+            'user' => $this->user->username,
             'telegram_user_name' => $this->telegram_user_name,
             'instagram_user_name' => $this->instagram_user_name,
             'facebook_user_name' => $this->facebook_user_name,
