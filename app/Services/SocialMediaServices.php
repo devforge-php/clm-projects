@@ -8,8 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class SocialMediaServices
 {
-    // Cache TTL (time-to-live) in minutes
-    private const TTL = 10;
+    private const TTL = 10; // Cache TTL (time-to-live) in minutes
 
     // Foydalanuvchi uchun barcha ijtimoiy tarmoq ma'lumotlarini olish
     public function getAllForUser(int $userId): Collection
@@ -24,29 +23,44 @@ class SocialMediaServices
     // Yangi profil yaratish
     public function createForUser(int $userId, array $data): ?SocialUserName
     {
-        // Agar foydalanuvchida allaqachon profil mavjud bo'lsa, NULL qaytariladi
+        // Foydalanuvchida allaqachon profil mavjudmi?
         if (SocialUserName::where('user_id', $userId)->exists()) {
-            return null; 
+            return null;
         }
 
-        // Yangi ijtimoiy tarmoq profilini yaratish
+        // Yangi profil yaratish
         $model = SocialUserName::create(['user_id' => $userId] + $data);
 
-        // Cache'ni tozalash, yangilash
+        // Cache'ni yangilash
         Cache::forget("social_media_user_{$userId}");
 
-        return $model;  // Yangi profil qaytariladi
+        return $model;
     }
 
     // Profilni yangilash
     public function updateForUser(SocialUserName $model, array $data): SocialUserName
     {
-        $model->fill($data);  // Ma'lumotlarni to'ldirish
-        if ($model->isDirty()) {  // Agar ma'lumotlar o'zgargan bo'lsa
-            $model->save();  // Saqlash
-            Cache::forget("social_media_user_{$model->user_id}");  // Cache yangilanadi
+        $model->fill($data);
+        if ($model->isDirty()) {
+            $model->save();
+            // Cache'ni yangilash
+            Cache::forget("social_media_user_{$model->user_id}");
         }
 
-        return $model;  // Yangilangan model qaytariladi
+        return $model;
+    }
+
+    // Profilni o'chirish
+    public function deleteForUser(SocialUserName $socialUser): bool
+    {
+        // Profilni o'chirish
+        $deleted = $socialUser->delete();
+
+        // Cache'ni yangilash
+        if ($deleted) {
+            Cache::forget("social_media_user_{$socialUser->user_id}");
+        }
+
+        return $deleted;
     }
 }

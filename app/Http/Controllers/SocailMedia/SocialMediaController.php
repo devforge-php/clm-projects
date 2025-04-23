@@ -20,10 +20,8 @@ class SocialMediaController extends Controller
     // Faonly o'zining profilingizni ko'rsatish
     public function index(): JsonResponse
     {
-        // Authentifikatsiyalangan foydalanuvchining ijtimoiy tarmoq ma'lumotlarini olish
         $data = $this->service->getAllForUser(auth()->id());
 
-        // Agar profil topilmasa, xatolik qaytariladi
         if ($data->isEmpty()) {
             return response()->json(['message' => 'Sizning profilingiz topilmadi.'], 404);
         }
@@ -36,10 +34,9 @@ class SocialMediaController extends Controller
     {
         $dto = $request->validated();
 
-        // Agar foydalanuvchi allaqachon profil yaratgan bo'lsa, xatolik qaytariladi
         $result = $this->service->createForUser(auth()->id(), $dto);
 
-        if (! $result) {
+        if (!$result) {
             return response()->json([
                 'message' => 'Siz allaqachon ijtimoiy tarmoqlar profilingizni kiritgansiz.'
             ], 409);
@@ -55,12 +52,22 @@ class SocialMediaController extends Controller
         if ($socialUser->user_id !== auth()->id()) {
             return response()->json(['message' => 'Siz faqat o\'z profilingizni yangilay olasiz.'], 403);
         }
-    
-        // Yangilash metodini chaqiramiz
+
         $this->service->updateForUser($socialUser, $request->validated());
-    
-        // Yangilash muvaffaqiyatli bo'lsa
+
         return response()->json(['message' => 'Yangilandi muvaffaqiyatli!']);
     }
-    
+
+    // Profilni o'chirish
+    public function destroy(SocialUserName $socialUser): JsonResponse
+    {
+        // Faqat o'z profilingizni o'chirishga ruxsat beriladi
+        if ($socialUser->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Siz faqat o\'z profilingizni o\'chira olasiz.'], 403);
+        }
+
+        $this->service->deleteForUser($socialUser);
+
+        return response()->json(['message' => 'Profil o\'chirildi.']);
+    }
 }
