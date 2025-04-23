@@ -1,6 +1,5 @@
 <?php
 
-// app/Http/Controllers/SocailMedia/SocialMediaController.php
 namespace App\Http\Controllers\SocailMedia;
 
 use App\Http\Controllers\Controller;
@@ -24,7 +23,7 @@ class SocialMediaController extends Controller
         return response()->json(SocialMediaResource::collection($data));
     }
 
-    public function store( $request): JsonResponse
+    public function store(SocialMediaStoreRequest $request): JsonResponse
     {
         $dto = $request->validated();
         $result = $this->service->createForUser(auth()->id(), $dto);

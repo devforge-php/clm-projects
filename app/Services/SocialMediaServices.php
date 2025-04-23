@@ -1,6 +1,5 @@
 <?php
 
-// app/Services/SocialMediaService.php
 namespace App\Services;
 
 use App\Models\SocialUserName;
@@ -24,22 +23,23 @@ class SocialMediaServices
     public function createForUser(int $userId, array $data): ?SocialUserName
     {
         if (SocialUserName::where('user_id', $userId)->exists()) {
-            return null;
+            return null;  // Foydalanuvchi allaqachon profil yaratgan bo'lsa, NULL qaytariladi
         }
 
         $model = SocialUserName::create(['user_id' => $userId] + $data);
         Cache::forget("social_media_user_{$userId}");
 
-        return $model;
+        return $model;  // Yangi profil yaratilib, saqlanadi
     }
 
     public function updateForUser(SocialUserName $model, array $data): SocialUserName
     {
-        $model->fill($data);
-        if ($model->isDirty()) {
-            $model->save();
-            Cache::forget("social_media_user_{$model->user_id}");
+        $model->fill($data);  // O'zgartirishlar qo'llanadi
+        if ($model->isDirty()) {  // Agar o'zgartirishlar amalga oshirilgan bo'lsa
+            $model->save();  // O'zgartirishlar saqlanadi
+            Cache::forget("social_media_user_{$model->user_id}");  // Cache yangilanadi
         }
-        return $model;
+
+        return $model;  // Yangilangan model qaytariladi
     }
 }

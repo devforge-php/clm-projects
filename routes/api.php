@@ -28,8 +28,9 @@ Route::middleware(['auth:sanctum', 'throttle:78,1'])->group(function () {
     Route::post('profile', [ProfileController::class, 'updateprofile']);
 
     // Social Media
-    Route::apiResource('socialMedia', SocialMediaController::class)
-         ->only(['index', 'store', 'update']);
+    Route::get('socialMedia', [SocialMediaController::class, 'index']);
+    Route::post('socialMedia', [SocialMediaController::class, 'store']);
+    Route::patch('socialMedia/{id}', [SocialMediaController::class, 'update']);
 
     // Profile Image
     Route::get('profileImage', [ProfileImageController::class, 'index']);
