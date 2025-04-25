@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 class SocialMediaController extends Controller
 {
     public function __construct()
-    {
+    {   
         $this->middleware('throttle:60,1');
     }
 

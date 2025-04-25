@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-
+use App\Events\TaskEvent;
 use App\Http\Requests\TaskRequest;
+use App\Jobs\EmailJobUsers;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -55,7 +56,7 @@ class TaskService
         ]);
 
         Cache::forget('tasks'); // Cache ni yangilash
-
+       event(new TaskEvent($task));
         return $task;
     }
 
