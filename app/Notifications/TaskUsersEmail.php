@@ -27,10 +27,13 @@ class TaskUsersEmail extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('Yangi task yaratildi!')
-                    ->line('Task: ' . $this->task->text)  // taskni ma'lumotini ko'rsatish
-                    ->action('Taskga qarash', url('/tasks/' . $this->task->id))
-                    ->line('Rahmat!');
+            ->subject('CLMGO.org — Yangi Task Tayinlandi ✅')
+            ->greeting('Assalomu alaykum!')
+            ->line('CLMGO.org platformasida siz uchun yangi task tayinlandi.')
+            ->line('Task matni: "' . $this->task->text . '"')
+            ->action('Taskni ko‘rish', url('https://clmgo.org/userTask'))
+            ->line('Batafsil ko‘rish va topshiriqni bajarish uchun tugmani bosing.')
+            ->salutation('CLM jamoasi bilan. Rahmat! 🤝');
     }
 
     public function toArray(object $notifiable): array
