@@ -1,0 +1,20 @@
+type Profile {
+  id: ID!
+  gold: Float!
+  tasks: String!
+  refferals: String!
+  level: String!
+}
+
+type User {
+  id: ID!
+  firstname: String!
+  lastname: String!
+  username: String!
+  profile: Profile @hasOne
+}
+
+type Query {
+  topUsers: [User!]!
+    @field(resolver: "App\\GraphQL\\Queries\\UserQuery@topUsers")
+}

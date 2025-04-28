@@ -56,7 +56,7 @@ class TaskService
         ]);
 
         Cache::forget('tasks'); // Cache ni yangilash
-       event(new TaskEvent($task));
+  
         return $task;
     }
 
