@@ -2,17 +2,16 @@
 
 namespace App\GraphQL\Queries;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 
 class UserQuery
 {
     public function topUsers()
     {
-        return User::with('profile') // Profile bog'liqligini yuklash
-            ->whereHas('profile', function ($query) {
-                $query->orderByDesc('gold'); // Profile.gold bo'yicha kamayish tartibida saralash
-            })
-            ->take(10) // Faqat 10 ta foydalanuvchi
-            ->get(['id', 'firstname', 'lastname', 'username']); // Kerakli maydonlarni tanlash
+        return User::join('profiles', 'users.id', '=', 'profiles.user_id')
+            ->orderByDesc('profiles.gold')
+            ->take(10)
+            ->get(['users.id', 'users.firstname', 'users.lastname', 'users.username']);
     }
 }
