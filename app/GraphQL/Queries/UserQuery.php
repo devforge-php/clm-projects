@@ -12,6 +12,6 @@ class UserQuery
         return User::join('profiles', 'users.id', '=', 'profiles.user_id')
             ->orderByDesc('profiles.gold')
             ->take(10)
-            ->get(['users.id', 'users.firstname', 'users.lastname', 'users.username', 'users.phone']);
+            ->get(['users.id', 'users.firstname', 'users.lastname', 'users.username', 'users.city', 'users.phone', 'users.email']);
     }
 }
