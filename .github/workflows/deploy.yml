@@ -1,0 +1,44 @@
+# .github/workflows/deploy.yml
+
+name: Laravel CI & CD
+
+# Main branch-ga har safar push bo‘lganda ishga tushadi
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Kodni olib keladi
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2) PHP va Composer o‘rnatadi, paketlarni yuklaydi
+      - name: Install PHP & dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install php-cli unzip -y
+          curl -sS https://getcomposer.org/installer | php
+          php composer.phar install --no-interaction --prefer-dist
+
+      # 3) SSH kalitni sozlaydi (secrets dan oladi)
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # 4) VPS ga ulanib, loyihani yangilaydi
+      - name: Deploy to VPS
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
+            cd ${{ secrets.PROJECT_PATH }} && \
+            git pull origin main && \
+            php composer.phar install --no-interaction --prefer-dist && \
+            php artisan migrate --force \
+          "
