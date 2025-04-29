@@ -31,13 +31,18 @@ jobs:
           echo "${{ secrets.SSH_DEPLOY_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
-
-      # 4) VPS ga ulanib, loyihani yangilaydi
+          
+      # 4) VPS ga ulanib, loyihani yangilaydi va cache'larni tozalaydi
       - name: Deploy to VPS
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
             cd ${{ secrets.PROJECT_PATH }} && \
             git pull origin main && \
             composer install --no-interaction --prefer-dist && \
-            php artisan migrate --force \
+            php artisan migrate --force && \
+            php artisan lighthouse:clear-cache && \
+            php artisan config:clear && \
+            php artisan route:clear && \
+            php artisan view:clear && \
+            php artisan optimize \
           "
