@@ -33,7 +33,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      # 4) VPS ga ulanib, loyihani yangilaydi
+      # 4) VPS ga ulanib, loyihani yangilaydiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
       - name: Deploy to VPS
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "\
