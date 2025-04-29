@@ -32,11 +32,10 @@ class PostController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        // Kirgan user ID-sini qo'shish
-        $data['user_id'] = Auth::id();
+        $data['user_id'] = Auth::id(); // avtomatik user_id
 
         $id = $this->service->store($data);
-        return response()->json(['id' => $id], 201);
+        return response()->json('Created', 201);
     }
 
     public function show(string $id)

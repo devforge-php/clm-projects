@@ -45,10 +45,9 @@ class PostsServise
     {
         $image = $this->saveImage($data['image'] ?? null);
 
-        $result = DB::selectOne("
-            INSERT INTO posts (user_id, image, name, description)
-            VALUES (?, ?, ?, ?)
-            RETURNING id
+        DB::insert("
+            INSERT INTO posts (user_id, image, name, description, created_at, updated_at)
+            VALUES (?, ?, ?, ?, NOW(), NOW())
         ", [
             $data['user_id'],
             $image,
@@ -56,8 +55,11 @@ class PostsServise
             $data['description']
         ]);
 
+        $id = DB::getPdo()->lastInsertId();
+
+        // Cache tozalash
         Cache::forget("posts_page_1");
-        return (int)$result->id;
+        return (int)$id;
     }
 
     // Yangilash
@@ -82,6 +84,7 @@ class PostsServise
         $values[] = $id;
         DB::update("UPDATE posts SET " . implode(', ', $params) . ", updated_at = NOW() WHERE id = ?", $values);
 
+        // Cache tozalash
         Cache::forget("post_{$id}");
         Cache::forget("posts_page_1");
     }
@@ -94,6 +97,7 @@ class PostsServise
 
         DB::delete("DELETE FROM posts WHERE id = ?", [$id]);
 
+        // Cache tozalash
         Cache::forget("post_{$id}");
         Cache::forget("posts_page_1");
     }
