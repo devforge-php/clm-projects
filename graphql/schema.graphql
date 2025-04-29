@@ -11,6 +11,8 @@ type User {
   firstname: String!
   lastname: String!
   username: String!
+  phone: String!
+  email: String!
   profile: Profile @hasOne
 }
 
