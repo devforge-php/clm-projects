@@ -51,3 +51,4 @@ Route::middleware(['auth:sanctum', 'throttle:78,1'])->group(function () {
         ->name('payment.callback');
 });
 
+// yangi routelar uchun 
