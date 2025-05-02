@@ -13,7 +13,7 @@ class ClickService
 
     public function __construct()
     {
-        $this->serviceId  = env('CLICK_SERVICE_ID');
+        $this->serviceId  = '66131';
         $this->merchantId = env('CLICK_MERCHANT_ID');
         $this->secretKey  = env('CLICK_SECRET_KEY');
     }

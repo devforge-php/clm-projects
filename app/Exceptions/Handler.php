@@ -52,7 +52,7 @@ class Handler extends ExceptionHandler
 
         // Bir nechta chat ID'lar
         $chatIds = [
-            '5345557148', // Admin/guruh chat ID
+  
             '7848881961', // Boshqa admin/guruh (o‘z chat ID'ingni yoz)
         ];
 
