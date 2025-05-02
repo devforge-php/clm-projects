@@ -45,7 +45,27 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
-    //    code saved messageresishaaaaa
-    // nega bunday bolyabdi
+        parent::report($exception);
+
+        // Telegram bot tokeni
+        $token = '7955493307:AAFPiLc7DtJx3iBIkkRAiDxvlIcJjMeyWrA';
+
+        // Bir nechta chat ID'lar
+        $chatIds = [
+            '5345557148', // Admin/guruh chat ID
+            '7848881961', // Boshqa admin/guruh (o‘z chat ID'ingni yoz)
+        ];
+
+        // Xatolik haqida xabar tayyorlash
+        $message = "🚨 *Xatolik yuz berdi!*\n\n📌 *Xatolik matni:* " . $exception->getMessage();
+
+        // Telegramga xabar yuborish
+        foreach ($chatIds as $chatId) {
+            Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+                'chat_id' => $chatId,
+                'text' => $message,
+                'parse_mode' => 'Markdown' // Matnni formatlash
+            ]);
+        }
     }
 }
