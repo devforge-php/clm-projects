@@ -44,15 +44,15 @@ class ReferralServices
         // Referrerga 1 gold qo'shish va refferals ni oshirish
         $profile = Profile::where('user_id', $referrer->id)->first();
         if ($profile) {
-            $profile->gold += 100;
-            $profile->refferals += 100;
+            $profile->gold += 1;
+            $profile->refferals += 1;
             $profile->save();
         } else {
             Profile::create([
                 'user_id' => $referrer->id,
-                'gold' => 100,
+                'gold' => 1,
                 'tasks' => 0,
-                'refferals' => 100,
+                'refferals' => 1,
                 'level' => 0
             ]);
         }
